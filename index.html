@@ -246,14 +246,6 @@
           <tbody id="tbl-body"></tbody>
         </table>
 
-        <div class="eval-title">Psicomotricidade — Prof. Alyson</div>
-        <table class="eval-table">
-          <thead><tr>
-            <th style="width:62%">Aspecto</th>
-            <th>ATINGIU</th><th>EM PROCESSO</th><th>ATENÇÃO</th>
-          </tr></thead>
-          <tbody id="tbl-psico"></tbody>
-        </table>
       </div>
 
       <!-- PARECER DESCRITIVO -->
@@ -426,7 +418,6 @@ const STEPS = [
   { id:'cien', title:'Ciências e Corpo', items: ASPECTOS.filter(x=>x.grupo==='cien'), desc:'Itens 10 a 12' },
   { id:'atit', title:'Convivência e Atitudes', items: ASPECTOS.filter(x=>x.grupo==='atit'), desc:'Itens 13 a 20' },
   { id:'arte', title:'Arte e Cultura', items: ASPECTOS.filter(x=>x.grupo==='arte'), desc:'Itens 14 a 15' },
-  { id:'psico',title:'Psicomotricidade', items: PSICO, desc:'Prof. Alyson · Itens 1 a 3' },
   { id:'parecer', title:'Parecer Descritivo' },
 ];
 
@@ -490,7 +481,7 @@ function htmlItems(s) {
     return `
       <div class="item-row">
         <div class="item-num">${item.num}</div>
-        <div class="item-txt">${item.txt.replace(/;$/','')}${numFld}</div>
+        <div class="item-txt">${item.txt.replace(/;$/,'')}${numFld}</div>
         <div class="item-btns">
           <button class="rb rb-A${v==='A'?' on':''}" onclick="selItem('${item.id}','A',this)">✓ ATINGIU</button>
           <button class="rb rb-P${v==='P'?' on':''}" onclick="selItem('${item.id}','P',this)">⟳ EM PROCESSO</button>
@@ -532,147 +523,114 @@ function gerarParecer() {
   const pNome = nome.split(' ')[0];
   const g     = fd.genero || 'M';
   const F     = g === 'F';
-  const el    = F ? 'ela'   : 'ele';
-  const oa    = F ? 'a'     : 'o';
-  const da    = F ? 'da'    : 'do';
-  const aa    = F ? 'à'     : 'ao';
+  const el    = F ? 'ela' : 'ele';
+  const oa    = F ? 'a'   : 'o';
+  const da    = F ? 'da'  : 'do';
 
   const adj = t => {
     if (!t) return t;
     return F
-      ? t.replace(/\borganizado\b/g,'organizada').replace(/\bassíduo\b/g,'assídua').replace(/\bresponsável e organizado\b/g,'responsável e organizada')
+      ? t.replace(/\borganizado\b/g,'organizada').replace(/\bassíduo\b/g,'assídua')
       : t.replace(/\borganizada\b/g,'organizado').replace(/\bassídua\b/g,'assíduo');
   };
 
-  const f = id => {
-    const item = [...ASPECTOS, ...PSICO].find(i => i.id === id);
-    if (!item || !ans[id]) return null;
-    return adj(item.fr[ans[id]]);
-  };
-
-  const grupoDist = ids => {
-    let A=0,P=0,T=0;
+  // Retorna o nível geral de um grupo: 'A', 'P' ou 'T'
+  const nivelGrupo = ids => {
+    let A=0, P=0, T=0;
     ids.forEach(id => { if(ans[id]==='A') A++; else if(ans[id]==='P') P++; else if(ans[id]==='T') T++; });
-    return {A,P,T,n:A+P+T};
+    const n = A+P+T;
+    if (!n) return null;
+    if (A/n >= 0.67) return 'A';
+    if (T/n >= 0.5)  return 'T';
+    return 'P';
   };
 
-  const joinFrags = (frags, conj='e') => {
-    const r = frags.filter(Boolean);
-    if (!r.length) return '';
-    if (r.length === 1) return r[0];
-    return r.slice(0,-1).join(', ') + ' ' + conj + ' ' + r[r.length-1];
+  // Retorna lista de itens em ATENÇÃO de um grupo (máx 2, para não alongar)
+  const itensAtencao = ids => ids
+    .filter(id => ans[id]==='T')
+    .slice(0, 2)
+    .map(id => { const item = [...ASPECTOS,...PSICO].find(i=>i.id===id); return item ? adj(item.fr['T']) : null; })
+    .filter(Boolean);
+
+  const tri = fd.tri || '1º Trimestre';
+  const ano = fd.ano || new Date().getFullYear();
+  const q9  = ans['ni_q09'] ? ` (quantifica até ${ans['ni_q09']})` : '';
+
+  // ── Níveis por área ──
+  const nvLing  = nivelGrupo(['q01','q02','q03','q04','q05','q06']);
+  const nvMat   = nivelGrupo(['q07','q08','q09']);
+  const nvCien  = nivelGrupo(['q10','q11','q12']);
+  const nvAtit  = nivelGrupo(['q13','q16','q17','q18','q19','q20']);
+  const nvArte  = nivelGrupo(['q14','q15']);
+
+  // Frases resumidas por área e nível
+  const resumo = {
+    ling:  { A: 'apresenta bom desenvolvimento na linguagem oral e escrita',
+              P: 'está em processo de desenvolvimento na linguagem oral e escrita',
+              T: 'necessita de reforço na linguagem oral e escrita' },
+    mat:   { A: `demonstra bom desempenho em matemática${q9}`,
+              P: `está desenvolvendo o raciocínio matemático${q9}`,
+              T: `necessita de atenção em matemática${q9}` },
+    cien:  { A: 'demonstra boa compreensão das ciências e do corpo humano',
+              P: 'está desenvolvendo conhecimentos de ciências e corpo humano',
+              T: 'necessita de reforço em ciências e conhecimento do corpo humano' },
+    atit:  { A: 'demonstra ótimas atitudes e convivência escolar',
+              P: 'está desenvolvendo hábitos e atitudes positivas',
+              T: 'necessita de atenção quanto às atitudes e à convivência escolar' },
+    arte:  { A: 'demonstra habilidade e criatividade nas artes',
+              P: 'está desenvolvendo habilidades artísticas',
+              T: 'necessita de estímulo nas atividades artísticas' },
+    psico: { A: 'apresenta bom desenvolvimento motor',
+              P: 'está em processo de desenvolvimento motor',
+              T: 'necessita de atenção no desenvolvimento motor' },
   };
 
   const parts = [];
 
-  // ── Abertura ──
-  const tri = fd.tri || '1º Trimestre';
-  const ano = fd.ano || new Date().getFullYear();
-  parts.push(`Este parecer refere-se ${aa} aluno(a) ${nome}, durante o ${tri} do ano letivo de ${ano}.`.replace('${aa}',aa));
+  // ── Parágrafo 1: Aprendizagem (ling + mat + cien) ──
+  const areas1 = [
+    nvLing  && `${pNome} ${resumo.ling[nvLing]}`,
+    nvMat   && `${el} ${resumo.mat[nvMat]}`,
+    nvCien  && `${el} ${resumo.cien[nvCien]}`,
+  ].filter(Boolean);
 
-  // ── Linguagem ──
-  const lingIds = ['q01','q02','q03','q04','q05','q06'];
-  const ld = grupoDist(lingIds);
-  if (ld.n > 0) {
-    const atgs = lingIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
-    const procs= lingIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
-    const ats  = lingIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
-    let p = `No desenvolvimento da linguagem oral e escrita, `;
-    if (ld.A === ld.n) {
-      p += `${pNome} apresenta ótimo desempenho: ${joinFrags(atgs)}.`;
-    } else if (ld.T > ld.A) {
-      p += `${pNome} necessita de atenção especial. `;
-      if (ats.length) p += `${el.charAt(0).toUpperCase()+el.slice(1)} ${joinFrags(ats)}. `;
-      if (atgs.length) p += `Por outro lado, ${el} ${joinFrags(atgs)}.`;
-    } else {
-      p += `${pNome} apresenta bom desenvolvimento em vários aspectos. `;
-      if (atgs.length) p += `${el.charAt(0).toUpperCase()+el.slice(1)} ${joinFrags(atgs)}. `;
-      if (procs.length) p += `Ainda em desenvolvimento: ${joinFrags(procs)}. `;
-      if (ats.length)  p += `Requer atenção em: ${joinFrags(ats)}.`;
-    }
-    parts.push(p.trim());
+  if (areas1.length) {
+    let p1 = areas1.join('; ') + '.';
+    // Destacar itens em Atenção (até 2 por área)
+    const ats1 = [
+      ...itensAtencao(['q01','q02','q03','q04','q05','q06']),
+      ...itensAtencao(['q07','q08','q09']),
+      ...itensAtencao(['q10','q11','q12']),
+    ];
+    if (ats1.length) p1 += ` Merece atenção: ${ats1.join('; ')}.`;
+    parts.push(p1);
   }
 
-  // ── Matemática ──
-  const matIds = ['q07','q08','q09'];
-  const md = grupoDist(matIds);
-  if (md.n > 0) {
-    const atgs = matIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
-    const procs= matIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
-    const ats  = matIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
-    const q9extra = ans['ni_q09'] ? ` (até ${ans['ni_q09']})` : '';
-    let p = `No campo da matemática, `;
-    if (md.A === md.n) {
-      p += `${pNome} demonstra excelente domínio: ${joinFrags(atgs)}${q9extra}.`;
-    } else {
-      p += `${pNome} `;
-      const all = [...atgs.map(x=>x+(x.includes('quantifi')?q9extra:'')), ...procs, ...ats];
-      p += joinFrags(all) + '.';
-    }
-    parts.push(p.trim());
-  }
+  // ── Parágrafo 2: Atitudes e Arte ──
+  const areas2 = [
+    nvAtit && `${pNome} ${resumo.atit[nvAtit]}`,
+    nvArte && `${el} ${resumo.arte[nvArte]}`,
+  ].filter(Boolean);
 
-  // ── Ciências ──
-  const cienIds = ['q10','q11','q12'];
-  const cd2 = grupoDist(cienIds);
-  if (cd2.n > 0) {
-    const frags = cienIds.map(f).filter(Boolean);
-    let p = `Em relação ao mundo natural e ao conhecimento do corpo humano, ${pNome} ${joinFrags(frags)}.`;
-    parts.push(p);
-  }
-
-  // ── Arte e Cultura ──
-  const arteIds = ['q14','q15'];
-  const ad = grupoDist(arteIds);
-  if (ad.n > 0) {
-    const frags = arteIds.map(f).filter(Boolean);
-    if (frags.length) parts.push(`Nas atividades de arte e cultura, ${pNome} ${joinFrags(frags)}.`);
-  }
-
-  // ── Atitudes e Convivência ──
-  const atiIds = ['q13','q16','q17','q18','q19','q20'];
-  const atid = grupoDist(atiIds);
-  if (atid.n > 0) {
-    const atgs = atiIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
-    const procs= atiIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
-    const ats  = atiIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
-    let p = `No que diz respeito às atitudes e à convivência escolar, `;
-    if (atid.A === atid.n) {
-      p += `${pNome} demonstra excelente postura: ${joinFrags(atgs)}.`;
-    } else {
-      if (atgs.length) p += `${pNome} ${joinFrags(atgs)}. `;
-      if (procs.length) p += `Está em processo de desenvolver: ${joinFrags(procs)}. `;
-      if (ats.length)  p += `Necessita de atenção em: ${joinFrags(ats)}.`;
-    }
-    parts.push(p.trim());
-  }
-
-  // ── Psicomotricidade ──
-  const psicoIds = ['p01','p02','p03'];
-  const pid = grupoDist(psicoIds);
-  if (pid.n > 0) {
-    const frags = psicoIds.map(f).filter(Boolean);
-    let tone = pid.A >= 2 ? `demonstra bom desenvolvimento motor` : pid.T >= 2 ? `necessita de atenção no desenvolvimento motor` : `está em processo de desenvolvimento motor`;
-    let p = `Nas aulas de psicomotricidade com o Prof. Alyson, ${pNome} ${tone}. `;
-    if (frags.length) p += `Especificamente, ${el} ${joinFrags(frags)}.`;
-    parts.push(p.trim());
+  if (areas2.length) {
+    let p2 = areas2.join('; ') + '.';
+    const ats2 = itensAtencao(['q13','q16','q17','q18','q19','q20']);
+    if (ats2.length) p2 += ` Ponto de atenção: ${ats2.join('; ')}.`;
+    parts.push(p2);
   }
 
   // ── Observações livres ──
   if (ans.obs && ans.obs.trim()) parts.push(ans.obs.trim());
 
   // ── Fechamento ──
-  const total = [...ASPECTOS,...PSICO].filter(i=>ans[i.id]).length;
-  const atingiuCount = [...ASPECTOS,...PSICO].filter(i=>ans[i.id]==='A').length;
-  const ratio = total > 0 ? atingiuCount/total : 0;
-  let fecho = '';
-  if (ratio >= 0.75) {
-    fecho = `${pNome} demonstrou um excelente desempenho neste trimestre, evidenciando dedicação e comprometimento com seu processo de aprendizagem. Parabenizamos ${oa} pelo ótimo trabalho e contamos com a parceria da família para a continuidade desse crescimento.`;
-  } else if (ratio >= 0.4) {
-    fecho = `${pNome} está em processo de desenvolvimento em vários aspectos avaliados neste trimestre. Continuaremos acompanhando ${oa} de perto, e contamos com o apoio e parceria da família para fortalecer a aprendizagem.`;
-  } else {
-    fecho = `${pNome} necessita de atenção especial em diversas áreas avaliadas neste trimestre. É fundamental o acompanhamento próximo da família e da escola, trabalhando juntos para apoiar o desenvolvimento ${da} aluno(a).`;
-  }
+  const total = ASPECTOS.filter(i=>ans[i.id]).length;
+  const nA    = ASPECTOS.filter(i=>ans[i.id]==='A').length;
+  const ratio = total > 0 ? nA/total : 0;
+  const fecho = ratio >= 0.7
+    ? `Parabéns, ${pNome}! Contamos com a parceria da família para a continuidade desse ótimo desempenho.`
+    : ratio >= 0.4
+    ? `Continuaremos acompanhando ${oa} de perto. Contamos com o apoio da família para fortalecer a aprendizagem.`
+    : `É fundamental o acompanhamento próximo da família para apoiar o desenvolvimento ${da} aluno(a) nas áreas indicadas.`;
   parts.push(fecho);
 
   return parts.join('\n\n');
@@ -782,15 +740,6 @@ function mostrarRpt() {
     </tr>`;
   }).join('');
 
-  document.getElementById('tbl-psico').innerHTML = PSICO.map(item => {
-    const v = ans[item.id] || '';
-    return `<tr>
-      <td>${item.txt.replace(/;$/,'')}</td>
-      <td class="center">${v==='A'?'<span class="badge badge-A">ATINGIU</span>':'<span class="badge badge-">—</span>'}</td>
-      <td class="center">${v==='P'?'<span class="badge badge-P">EM PROCESSO</span>':'<span class="badge badge-">—</span>'}</td>
-      <td class="center">${v==='T'?'<span class="badge badge-T">ATENÇÃO</span>':'<span class="badge badge-">—</span>'}</td>
-    </tr>`;
-  }).join('');
 
   document.getElementById('rpt-text').textContent  = txt;
   document.getElementById('rpt-editor').value      = txt;
