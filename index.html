@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parecer Avaliativo — 1º Ano</title>
+  <style>
+    :root {
+      --blue:    #2563EB;
+      --blue-l:  #EFF6FF;
+      --green:   #16A34A;
+      --green-l: #DCFCE7;
+      --amber:   #D97706;
+      --amber-l: #FEF3C7;
+      --red:     #DC2626;
+      --red-l:   #FEE2E2;
+      --gray-50: #F8FAFC;
+      --gray-100:#F1F5F9;
+      --gray-200:#E2E8F0;
+      --gray-300:#CBD5E1;
+      --gray-400:#94A3B8;
+      --gray-500:#64748B;
+      --gray-600:#475569;
+      --gray-700:#334155;
+      --gray-800:#1E293B;
+      --r: 12px;
+      --sh: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shl: 0 8px 24px rgba(0,0,0,.1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+    /* ─── HEADER ─── */
+    .hdr {
+      background: #fff; border-bottom: 1px solid var(--gray-200);
+      padding: 13px 20px; display: flex; align-items: center; gap: 14px;
+      position: sticky; top: 0; z-index: 50; box-shadow: var(--sh);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-ic { width: 36px; height: 36px; background: var(--blue); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .logo-nm { font-weight: 800; font-size: 16px; color: var(--blue); }
+    .logo-sb { font-size: 11px; color: var(--gray-400); }
+    .hdr-prog { flex: 1; max-width: 340px; margin-left: auto; }
+    .pl { font-size: 11px; color: var(--gray-500); display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .pb { height: 5px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+    .pf { height: 100%; background: var(--blue); border-radius: 99px; transition: width .3s; }
+
+    /* ─── MAIN ─── */
+    .main { max-width: 740px; margin: 0 auto; padding: 22px 14px 70px; }
+
+    /* ─── STEP DOTS ─── */
+    .sdots { display: flex; justify-content: center; gap: 7px; margin-bottom: 20px; flex-wrap: wrap; }
+    .sd { width: 9px; height: 9px; border-radius: 50%; background: var(--gray-300); cursor: pointer; transition: all .2s; }
+    .sd.done   { background: var(--green); }
+    .sd.active { background: var(--blue); transform: scale(1.4); }
+
+    /* ─── CARD ─── */
+    .card { background: #fff; border-radius: var(--r); box-shadow: var(--sh); margin-bottom: 16px; overflow: hidden; }
+    .ch { padding: 16px 20px 12px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 11px; }
+    .cn { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .cn.g { background: var(--green); }
+    .ct { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+    .cd { font-size: 12px; color: var(--gray-400); margin-top: 1px; }
+    .cb { padding: 18px 20px; }
+
+    /* ─── FORM ─── */
+    .fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fg  { display: flex; flex-direction: column; gap: 5px; }
+    .fg.full { grid-column: 1/-1; }
+    .lb { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; }
+    input[type=text], input[type=number], select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: 14px; color: var(--gray-800); font-family: inherit; background: #fff; transition: border-color .2s;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 14px; color: var(--gray-800); font-family: inherit; resize: vertical; min-height: 120px; transition: border-color .2s; }
+    textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+
+    /* ─── GENDER ─── */
+    .gn-row { display: flex; gap: 10px; }
+    .gn-opt {
+      flex: 1; padding: 10px; border: 2px solid var(--gray-200); border-radius: 9px;
+      text-align: center; cursor: pointer; font-weight: 600; font-size: 13px; transition: all .15s;
+    }
+    .gn-opt:hover, .gn-opt.on { border-color: var(--blue); background: var(--blue-l); color: var(--blue); }
+
+    /* ─── ITEM ROW ─── */
+    .item-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 13px 0; border-bottom: 1px solid var(--gray-100);
+    }
+    .item-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .item-num { width: 22px; height: 22px; border-radius: 50%; background: var(--gray-100); color: var(--gray-500); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .item-txt { flex: 1; font-size: 13.5px; line-height: 1.5; color: var(--gray-700); }
+    .item-txt .num-input { display: inline-block; width: 48px; border: none; border-bottom: 2px solid var(--gray-300); padding: 1px 4px; font-size: 13px; text-align: center; font-weight: 700; background: transparent; margin: 0 3px; }
+    .item-txt .num-input:focus { outline: none; border-bottom-color: var(--blue); }
+    .item-btns { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+    .rb {
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
+      cursor: pointer; border: 1.5px solid; transition: all .15s; white-space: nowrap; text-align: center;
+    }
+    .rb-A { border-color: var(--green); color: var(--green); background: #fff; }
+    .rb-A:hover, .rb-A.on { background: var(--green); color: #fff; }
+    .rb-P { border-color: var(--amber); color: var(--amber); background: #fff; }
+    .rb-P:hover, .rb-P.on { background: var(--amber); color: #fff; }
+    .rb-T { border-color: var(--red); color: var(--red); background: #fff; }
+    .rb-T:hover, .rb-T.on { background: var(--red); color: #fff; }
+
+    /* ─── SECTION LABEL ─── */
+    .sec-lbl {
+      font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--gray-400); padding: 10px 0 4px; margin-bottom: 2px;
+      border-top: 1px solid var(--gray-100); margin-top: 6px;
+    }
+    .sec-lbl:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+    /* ─── NAV ─── */
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .btn { padding: 12px 24px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all .15s; display: inline-flex; align-items: center; gap: 7px; }
+    .btn-p { background: var(--blue); color: #fff; }
+    .btn-p:hover { background: #1D4ED8; transform: translateY(-1px); }
+    .btn-s { background: #fff; color: var(--gray-700); border: 1.5px solid var(--gray-200); }
+    .btn-s:hover { background: var(--gray-50); }
+    .btn-g { background: var(--green); color: #fff; }
+    .btn-g:hover { background: #15803D; transform: translateY(-1px); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none !important; }
+
+    /* ─── PROGRESS RING ─── */
+    .missing-warn { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400E; margin-top: 12px; display: none; }
+    .missing-warn.show { display: block; }
+
+    /* ─── REPORT ─── */
+    #rpt { display: none; }
+    .rpt-card { background: #fff; border-radius: var(--r); box-shadow: var(--shl); overflow: hidden; }
+    .rpt-hdr { background: linear-gradient(135deg,#1D4ED8,#3B82F6); color: #fff; padding: 24px 28px; }
+    .rpt-school { font-size: 12px; opacity: .7; margin-bottom: 2px; }
+    .rpt-title  { font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+    .rpt-meta   { display: flex; gap: 20px; flex-wrap: wrap; }
+    .rpt-mi     { font-size: 12px; }
+    .rpt-mi strong { display: block; font-size: 10px; opacity: .6; text-transform: uppercase; letter-spacing: .07em; }
+
+    /* ─── EVAL TABLE ─── */
+    .eval-section { margin: 0 28px 0; }
+    .eval-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--gray-500); padding: 16px 0 8px; border-top: 1px solid var(--gray-100); }
+    .eval-title:first-child { border-top: none; }
+    .eval-table { width: 100%; border-collapse: collapse; }
+    .eval-table th { font-size: 10px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; text-align: center; border-bottom: 2px solid var(--gray-200); }
+    .eval-table th:first-child { text-align: left; }
+    .eval-table td { font-size: 13px; padding: 8px 8px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+    .eval-table td:first-child { color: var(--gray-700); line-height: 1.4; }
+    .eval-table td.center { text-align: center; }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 800;
+      padding: 3px 8px; border-radius: 99px; letter-spacing: .05em;
+    }
+    .badge-A { background: var(--green-l); color: var(--green); }
+    .badge-P { background: var(--amber-l); color: var(--amber); }
+    .badge-T { background: var(--red-l);   color: var(--red); }
+    .badge-  { color: var(--gray-300); font-size: 16px; }
+
+    /* ─── PARECER TEXT ─── */
+    .parecer-box { margin: 0 28px 28px; }
+    .parecer-lbl { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: var(--gray-500); margin-bottom: 8px; padding-top: 16px; border-top: 1px solid var(--gray-100); }
+    #rpt-text { font-size: 14px; line-height: 1.85; color: var(--gray-800); font-family: Georgia, serif; white-space: pre-wrap; }
+    #rpt-editor { display: none; width: 100%; min-height: 280px; font-size: 14px; line-height: 1.85; font-family: Georgia, serif; border: 1.5px solid var(--gray-200); border-radius: 8px; padding: 14px; resize: vertical; color: var(--gray-800); }
+
+    /* ─── REPORT FOOTER ─── */
+    .rpt-foot { padding: 16px 28px; border-top: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .rpt-sig { font-size: 12px; color: var(--gray-400); }
+    .rpt-acts { display: flex; gap: 9px; flex-wrap: wrap; }
+
+    /* ─── LEGEND ─── */
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .leg-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-600); }
+    .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ─── TOAST ─── */
+    .toast { position: fixed; bottom: 18px; right: 18px; background: var(--gray-900); color: #fff; padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(6px); transition: all .25s; z-index: 999; }
+    .toast.on { opacity: 1; transform: translateY(0); }
+
+    /* ─── PRINT ─── */
+    @media print {
+      .hdr, .nav, .rpt-foot, .sdots, #form-sec { display: none !important; }
+      #rpt { display: block !important; }
+      .rpt-card { box-shadow: none; }
+      body { background: #fff; }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 540px) {
+      .fg2 { grid-template-columns: 1fr; }
+      .item-btns { flex-direction: row; }
+      .rb { padding: 6px 8px; font-size: 10px; }
+      .main { padding: 16px 10px 70px; }
+      .eval-section, .parecer-box, .rpt-foot { margin-left: 16px; margin-right: 16px; }
+      .rpt-hdr { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">
+    <div class="logo-ic">📋</div>
+    <div>
+      <div class="logo-nm">PareceAI</div>
+      <div class="logo-sb">Escola Luterana · 1º Ano</div>
+    </div>
+  </div>
+  <div class="hdr-prog" id="hdr-prog">
+    <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
+    <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="sdots" id="sdots"></div>
+  <div id="form-sec"></div>
+  <div id="rpt">
+    <div class="rpt-card">
+      <div class="rpt-hdr">
+        <div class="rpt-school">Escola Luterana Comunitária de Ensino Fundamental São Mateus</div>
+        <div class="rpt-title">Parecer Avaliativo — 1º Ano</div>
+        <div class="rpt-meta">
+          <div class="rpt-mi"><strong>Aluno(a)</strong><span id="r-nome"></span></div>
+          <div class="rpt-mi"><strong>Turma</strong><span id="r-turma"></span></div>
+          <div class="rpt-mi"><strong>Turno</strong><span id="r-turno"></span></div>
+          <div class="rpt-mi"><strong>Trimestre</strong><span id="r-tri"></span></div>
+          <div class="rpt-mi"><strong>Data</strong><span id="r-data"></span></div>
+        </div>
+      </div>
+
+      <!-- EVAL TABLE -->
+      <div class="eval-section">
+        <div class="eval-title">Aspectos Importantes</div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Atingiu — rendimento satisfatório</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Em Processo — rendimento a melhorar</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Atenção — necessita dedicação</div>
+        </div>
+        <table class="eval-table">
+          <thead><tr>
+            <th style="width:62%">Aspecto</th>
+            <th>ATINGIU</th><th>EM PROCESSO</th><th>ATENÇÃO</th>
+          </tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+
+        <div class="eval-title">Psicomotricidade — Prof. Alyson</div>
+        <table class="eval-table">
+          <thead><tr>
+            <th style="width:62%">Aspecto</th>
+            <th>ATINGIU</th><th>EM PROCESSO</th><th>ATENÇÃO</th>
+          </tr></thead>
+          <tbody id="tbl-psico"></tbody>
+        </table>
+      </div>
+
+      <!-- PARECER DESCRITIVO -->
+      <div class="parecer-box">
+        <div class="parecer-lbl">Parecer Descritivo</div>
+        <div id="rpt-text"></div>
+        <textarea id="rpt-editor" spellcheck="true"></textarea>
+      </div>
+
+      <div class="rpt-foot">
+        <div class="rpt-sig" id="r-prof"></div>
+        <div class="rpt-acts">
+          <button class="btn btn-s" id="btn-ed" onclick="toggleEdit()">✏️ Editar texto</button>
+          <button class="btn btn-s" onclick="copyRpt()">📋 Copiar</button>
+          <button class="btn btn-s" onclick="window.print()">🖨️ Imprimir</button>
+          <button class="btn btn-p" onclick="novoRpt()">＋ Novo parecer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="nav" id="nav">
+    <button class="btn btn-s" id="btn-prev" onclick="prev()">← Anterior</button>
+    <button class="btn btn-p" id="btn-next" onclick="next()">Próximo →</button>
+  </div>
+  <div class="missing-warn" id="warn">⚠️ <span id="warn-txt"></span></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════
+   DATA
+══════════════════════════════════ */
+let step = 0;
+let fd   = {};   // form/identification data
+let ans  = {};   // item answers: {id: 'A'|'P'|'T'}
+
+const ASPECTOS = [
+  // Linguagem
+  { id:'q01', grupo:'ling', num:1,
+    txt:'Participa de interações orais em sala de aula, questionando, sugerindo, argumentando e respeitando as regras do grupo.',
+    fr:{ A:'participa ativamente das interações orais, questionando, sugerindo e argumentando com desenvoltura, respeitando as regras do grupo',
+         P:'está em processo de desenvolver a participação nas interações orais em sala, avançando na capacidade de questionar e argumentar',
+         T:'necessita de maior incentivo para participar das interações orais em sala de aula' } },
+  { id:'q02', grupo:'ling', num:2,
+    txt:'Diferencia letras, números e desenhos;',
+    fr:{ A:'diferencia letras, números e desenhos com segurança',
+         P:'está desenvolvendo a diferenciação entre letras, números e desenhos',
+         T:'ainda apresenta dificuldade para diferenciar letras, números e desenhos' } },
+  { id:'q03', grupo:'ling', num:3,
+    txt:'Reconhece as vogais e as consoantes;',
+    fr:{ A:'reconhece as vogais e as consoantes com segurança',
+         P:'está em processo de reconhecimento das vogais e consoantes',
+         T:'necessita de reforço no reconhecimento das vogais e consoantes' } },
+  { id:'q04', grupo:'ling', num:4,
+    txt:'Conhece, identifica e nomeia as letras do alfabeto e as formas de escrita que elas possuem;',
+    fr:{ A:'conhece, identifica e nomeia as letras do alfabeto e suas formas de escrita',
+         P:'está em processo de identificação e nomeação das letras do alfabeto',
+         T:'precisa de atenção no reconhecimento e nomeação das letras do alfabeto' } },
+  { id:'q05', grupo:'ling', num:5,
+    txt:'Conhece os encontros vocálicos;',
+    fr:{ A:'demonstra conhecimento dos encontros vocálicos',
+         P:'está desenvolvendo o conhecimento dos encontros vocálicos',
+         T:'ainda necessita de reforço no reconhecimento dos encontros vocálicos' } },
+  { id:'q06', grupo:'ling', num:6,
+    txt:'Completa palavras com a letra inicial, com base na imagem que representa;',
+    fr:{ A:'completa palavras com a letra inicial a partir da imagem com segurança',
+         P:'está em processo de completar palavras com a letra inicial baseando-se em imagens',
+         T:'necessita de apoio para completar palavras com a letra inicial a partir da imagem' } },
+  // Matemática
+  { id:'q07', grupo:'mat', num:7,
+    txt:'Compreende as relações de tamanho, comprimento, largura e espessura;',
+    fr:{ A:'compreende com segurança as relações de tamanho, comprimento, largura e espessura',
+         P:'está desenvolvendo a compreensão das relações de tamanho, comprimento, largura e espessura',
+         T:'necessita de reforço na compreensão das relações de tamanho, comprimento, largura e espessura' } },
+  { id:'q08', grupo:'mat', num:8,
+    txt:'Compreende noções espaciais e períodos do dia (Manhã, tarde, noite);',
+    fr:{ A:'demonstra boa compreensão das noções espaciais e dos períodos do dia',
+         P:'está desenvolvendo a compreensão das noções espaciais e dos períodos do dia',
+         T:'precisa de reforço nas noções espaciais e na compreensão dos períodos do dia' } },
+  { id:'q09', grupo:'mat', num:9, hasInput: true,
+    txt:'Estabelece relação de número e quantifica até',
+    fr:{ A:'estabelece relação de número e quantifica com segurança',
+         P:'está em processo de estabelecer relação de número e quantificação',
+         T:'necessita de atenção no estabelecimento de relação numérica e quantificação' } },
+  // Ciências / Corpo
+  { id:'q10', grupo:'cien', num:10,
+    txt:'Reconhece as cores.',
+    fr:{ A:'reconhece as cores com segurança',
+         P:'está desenvolvendo o reconhecimento das cores',
+         T:'ainda necessita de reforço no reconhecimento das cores' } },
+  { id:'q11', grupo:'cien', num:11,
+    txt:'Identifica as partes do corpo humano;',
+    fr:{ A:'identifica as partes do corpo humano com desenvoltura',
+         P:'está em processo de identificação das partes do corpo humano',
+         T:'necessita de reforço na identificação das partes do corpo humano' } },
+  { id:'q12', grupo:'cien', num:12,
+    txt:'Compreende os cuidados que devemos ter com a saúde do corpo.',
+    fr:{ A:'compreende a importância dos cuidados com a saúde do corpo',
+         P:'está desenvolvendo a compreensão sobre os cuidados com a saúde do corpo',
+         T:'necessita de reforço na compreensão dos cuidados com a saúde do corpo' } },
+  // Convivência e Atitudes
+  { id:'q13', grupo:'atit', num:13,
+    txt:'Relaciona-se bem com os colegas e professores.',
+    fr:{ A:'relaciona-se muito bem com os colegas e professores, demonstrando respeito e empatia',
+         P:'está desenvolvendo um relacionamento positivo com os colegas e professores',
+         T:'necessita de atenção no relacionamento com colegas e professores' } },
+  { id:'q14', grupo:'arte', num:14,
+    txt:'Demonstra habilidade e criatividade em atividades artísticas.',
+    fr:{ A:'demonstra habilidade e criatividade nas atividades artísticas',
+         P:'está desenvolvendo habilidades e criatividade nas atividades artísticas',
+         T:'necessita de estímulo para desenvolver habilidades artísticas' } },
+  { id:'q15', grupo:'arte', num:15,
+    txt:'Reconhece a importância das datas comemorativas, cultura do povo indígena, Dia das mulheres, dia das mães;',
+    fr:{ A:'reconhece e valoriza a importância das datas comemorativas e da diversidade cultural',
+         P:'está desenvolvendo o reconhecimento das datas comemorativas e da diversidade cultural',
+         T:'necessita de reforço no reconhecimento das datas comemorativas e da importância cultural' } },
+  { id:'q16', grupo:'atit', num:16,
+    txt:'É responsável e organizado(a), trazendo sempre seu material.',
+    fr:{ A:'é responsável e organizado(a), trazendo sempre o material necessário para as aulas',
+         P:'está desenvolvendo a responsabilidade e organização com o material escolar',
+         T:'necessita de reforço quanto à responsabilidade e organização com o material escolar' } },
+  { id:'q17', grupo:'atit', num:17,
+    txt:'É assíduo(a) e pontual às aulas.',
+    fr:{ A:'é assíduo(a) e pontual às aulas',
+         P:'apresenta assiduidade e pontualidade em desenvolvimento',
+         T:'necessita de atenção quanto à assiduidade e pontualidade às aulas' } },
+  { id:'q18', grupo:'atit', num:18,
+    txt:'Presta atenção às orientações da professora, seguindo as regras estabelecidas.',
+    fr:{ A:'presta atenção às orientações da professora e segue as regras estabelecidas com comprometimento',
+         P:'está em processo de desenvolver a atenção às orientações e ao cumprimento das regras',
+         T:'necessita de reforço quanto à atenção às orientações e ao cumprimento das regras' } },
+  { id:'q19', grupo:'atit', num:19,
+    txt:'Valoriza a escola como espaço de amizade, aprendizagem e respeito;',
+    fr:{ A:'valoriza a escola como espaço de amizade, aprendizagem e respeito',
+         P:'está desenvolvendo a valorização da escola como espaço coletivo de aprendizagem',
+         T:'necessita de estímulo para valorizar a escola como espaço de convivência e aprendizagem' } },
+  { id:'q20', grupo:'atit', num:20,
+    txt:'Apresenta autonomia para concluir as atividades.',
+    fr:{ A:'apresenta boa autonomia para concluir as atividades propostas de forma independente',
+         P:'está desenvolvendo a autonomia para concluir as atividades com menor dependência',
+         T:'necessita de apoio para concluir as atividades com autonomia' } },
+];
+
+const PSICO = [
+  { id:'p01', num:1,
+    txt:'Participa das atividades, respeitando as regras estabelecidas.',
+    fr:{ A:'participa ativamente das atividades de psicomotricidade, respeitando as regras estabelecidas',
+         P:'está em processo de participar das atividades de psicomotricidade respeitando as regras',
+         T:'necessita de atenção na participação das atividades com respeito às regras' } },
+  { id:'p02', num:2,
+    txt:'Compreende as tarefas a serem executadas.',
+    fr:{ A:'compreende com clareza as tarefas propostas pelo professor',
+         P:'está desenvolvendo a compreensão das tarefas a serem executadas',
+         T:'necessita de reforço para compreender as tarefas propostas' } },
+  { id:'p03', num:3,
+    txt:'Realiza as atividades envolvendo habilidades motoras básicas (correr, saltar, orientação espacial e velocidade-reação), de acordo com sua faixa-etária.',
+    fr:{ A:'realiza as habilidades motoras básicas — correr, saltar, orientação espacial e velocidade-reação — de acordo com sua faixa etária',
+         P:'está desenvolvendo as habilidades motoras básicas dentro de sua faixa etária',
+         T:'necessita de atenção no desenvolvimento das habilidades motoras básicas' } },
+];
+
+/* ══════════════════════════════════
+   STEPS CONFIG
+══════════════════════════════════ */
+const STEPS = [
+  { id:'id',   title:'Identificação' },
+  { id:'ling', title:'Linguagem e Letramento', items: ASPECTOS.filter(x=>x.grupo==='ling'), desc:'Itens 1 a 6' },
+  { id:'mat',  title:'Matemática', items: ASPECTOS.filter(x=>x.grupo==='mat'), desc:'Itens 7 a 9' },
+  { id:'cien', title:'Ciências e Corpo', items: ASPECTOS.filter(x=>x.grupo==='cien'), desc:'Itens 10 a 12' },
+  { id:'atit', title:'Convivência e Atitudes', items: ASPECTOS.filter(x=>x.grupo==='atit'), desc:'Itens 13 a 20' },
+  { id:'arte', title:'Arte e Cultura', items: ASPECTOS.filter(x=>x.grupo==='arte'), desc:'Itens 14 a 15' },
+  { id:'psico',title:'Psicomotricidade', items: PSICO, desc:'Prof. Alyson · Itens 1 a 3' },
+  { id:'parecer', title:'Parecer Descritivo' },
+];
+
+/* ══════════════════════════════════
+   RENDER
+══════════════════════════════════ */
+function renderStep() {
+  const s = STEPS[step];
+  const el = document.getElementById('form-sec');
+
+  if (s.id === 'id')       el.innerHTML = htmlId();
+  else if (s.id === 'parecer') el.innerHTML = htmlParecer();
+  else                     el.innerHTML = htmlItems(s);
+
+  updateProgress();
+  updateNav();
+}
+
+function htmlId() {
+  return `
+  <div class="card">
+    <div class="ch"><div class="cn">1</div><div><div class="ct">Identificação do Aluno(a)</div><div class="cd">Dados para o cabeçalho do parecer</div></div></div>
+    <div class="cb">
+      <div class="fg2">
+        <div class="fg full"><span class="lb">Nome completo do(a) aluno(a) *</span>
+          <input type="text" id="f_nome" placeholder="Ex: Maria Eduarda Santos" value="${esc(fd.nome||'')}"></div>
+        <div class="fg"><span class="lb">Sexo *</span>
+          <div class="gn-row">
+            <div class="gn-opt${fd.genero==='F'?' on':''}" onclick="selGn(event,'F')">👧 Feminino</div>
+            <div class="gn-opt${fd.genero==='M'?' on':''}" onclick="selGn(event,'M')">👦 Masculino</div>
+          </div></div>
+        <div class="fg"><span class="lb">Turma</span>
+          <input type="text" id="f_turma" placeholder="Ex: 1A" value="${esc(fd.turma||'')}"></div>
+        <div class="fg"><span class="lb">Turno</span>
+          <select id="f_turno">
+            ${['Manhã','Tarde','Noite'].map(t=>`<option${fd.turno===t?' selected':''}>${t}</option>`).join('')}
+          </select></div>
+        <div class="fg"><span class="lb">Trimestre</span>
+          <select id="f_tri">
+            ${['1º Trimestre','2º Trimestre','3º Trimestre'].map(t=>`<option${fd.tri===t?' selected':''}>${t}</option>`).join('')}
+          </select></div>
+        <div class="fg"><span class="lb">Ano Letivo</span>
+          <input type="text" id="f_ano" placeholder="2025" value="${esc(fd.ano||new Date().getFullYear())}"></div>
+        <div class="fg"><span class="lb">Presenças</span>
+          <input type="number" id="f_pres" placeholder="0" min="0" value="${esc(fd.pres||'')}"></div>
+        <div class="fg"><span class="lb">Faltas</span>
+          <input type="number" id="f_falt" placeholder="0" min="0" value="${esc(fd.falt||'')}"></div>
+        <div class="fg full"><span class="lb">Professora regente</span>
+          <input type="text" id="f_prof" placeholder="Ex: Professora Ana Lima" value="${esc(fd.prof||'')}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function htmlItems(s) {
+  const rows = s.items.map(item => {
+    const v = ans[item.id] || '';
+    const numFld = item.hasInput
+      ? `<input class="num-input" type="text" id="ni_${item.id}" value="${esc(ans['ni_'+item.id]||'')}" placeholder="___">`
+      : '';
+    return `
+      <div class="item-row">
+        <div class="item-num">${item.num}</div>
+        <div class="item-txt">${item.txt.replace(/;$/','')}${numFld}</div>
+        <div class="item-btns">
+          <button class="rb rb-A${v==='A'?' on':''}" onclick="selItem('${item.id}','A',this)">✓ ATINGIU</button>
+          <button class="rb rb-P${v==='P'?' on':''}" onclick="selItem('${item.id}','P',this)">⟳ EM PROCESSO</button>
+          <button class="rb rb-T${v==='T'?' on':''}" onclick="selItem('${item.id}','T',this)">! ATENÇÃO</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="ch"><div class="cn">${STEPS[step].id === 'psico' ? '<span style="font-size:10px">🤸</span>' : step}</div>
+      <div><div class="ct">${s.title}</div><div class="cd">${s.desc||''}</div></div></div>
+    <div class="cb">${rows}</div>
+  </div>`;
+}
+
+function htmlParecer() {
+  const txt = gerarParecer();
+  return `
+  <div class="card">
+    <div class="ch"><div class="cn">✎</div>
+      <div><div class="ct">Observações adicionais</div><div class="cd">O parecer descritivo será gerado automaticamente — adicione algo aqui se quiser</div></div></div>
+    <div class="cb">
+      <textarea id="f_obs" placeholder="Escreva aqui observações específicas sobre o(a) aluno(a): situações relevantes, contexto familiar, conquistas especiais, áreas de atenção específicas...">${esc(ans.obs||'')}</textarea>
+    </div>
+  </div>
+  <div class="card" style="border: 2px solid var(--green)">
+    <div class="ch"><div class="cn g">👁</div>
+      <div><div class="ct">Prévia do Parecer Descritivo</div><div class="cd">Gerado com base nas avaliações — você poderá editar depois</div></div></div>
+    <div class="cb" style="font-size:14px;line-height:1.85;color:var(--gray-700);font-family:Georgia,serif;white-space:pre-wrap">${esc(txt)}</div>
+  </div>`;
+}
+
+/* ══════════════════════════════════
+   TEXT GENERATION
+══════════════════════════════════ */
+function gerarParecer() {
+  const nome  = fd.nome  || 'O(A) aluno(a)';
+  const pNome = nome.split(' ')[0];
+  const g     = fd.genero || 'M';
+  const F     = g === 'F';
+  const el    = F ? 'ela'   : 'ele';
+  const oa    = F ? 'a'     : 'o';
+  const da    = F ? 'da'    : 'do';
+  const aa    = F ? 'à'     : 'ao';
+
+  const adj = t => {
+    if (!t) return t;
+    return F
+      ? t.replace(/\borganizado\b/g,'organizada').replace(/\bassíduo\b/g,'assídua').replace(/\bresponsável e organizado\b/g,'responsável e organizada')
+      : t.replace(/\borganizada\b/g,'organizado').replace(/\bassídua\b/g,'assíduo');
+  };
+
+  const f = id => {
+    const item = [...ASPECTOS, ...PSICO].find(i => i.id === id);
+    if (!item || !ans[id]) return null;
+    return adj(item.fr[ans[id]]);
+  };
+
+  const grupoDist = ids => {
+    let A=0,P=0,T=0;
+    ids.forEach(id => { if(ans[id]==='A') A++; else if(ans[id]==='P') P++; else if(ans[id]==='T') T++; });
+    return {A,P,T,n:A+P+T};
+  };
+
+  const joinFrags = (frags, conj='e') => {
+    const r = frags.filter(Boolean);
+    if (!r.length) return '';
+    if (r.length === 1) return r[0];
+    return r.slice(0,-1).join(', ') + ' ' + conj + ' ' + r[r.length-1];
+  };
+
+  const parts = [];
+
+  // ── Abertura ──
+  const tri = fd.tri || '1º Trimestre';
+  const ano = fd.ano || new Date().getFullYear();
+  parts.push(`Este parecer refere-se ${aa} aluno(a) ${nome}, durante o ${tri} do ano letivo de ${ano}.`.replace('${aa}',aa));
+
+  // ── Linguagem ──
+  const lingIds = ['q01','q02','q03','q04','q05','q06'];
+  const ld = grupoDist(lingIds);
+  if (ld.n > 0) {
+    const atgs = lingIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
+    const procs= lingIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
+    const ats  = lingIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
+    let p = `No desenvolvimento da linguagem oral e escrita, `;
+    if (ld.A === ld.n) {
+      p += `${pNome} apresenta ótimo desempenho: ${joinFrags(atgs)}.`;
+    } else if (ld.T > ld.A) {
+      p += `${pNome} necessita de atenção especial. `;
+      if (ats.length) p += `${el.charAt(0).toUpperCase()+el.slice(1)} ${joinFrags(ats)}. `;
+      if (atgs.length) p += `Por outro lado, ${el} ${joinFrags(atgs)}.`;
+    } else {
+      p += `${pNome} apresenta bom desenvolvimento em vários aspectos. `;
+      if (atgs.length) p += `${el.charAt(0).toUpperCase()+el.slice(1)} ${joinFrags(atgs)}. `;
+      if (procs.length) p += `Ainda em desenvolvimento: ${joinFrags(procs)}. `;
+      if (ats.length)  p += `Requer atenção em: ${joinFrags(ats)}.`;
+    }
+    parts.push(p.trim());
+  }
+
+  // ── Matemática ──
+  const matIds = ['q07','q08','q09'];
+  const md = grupoDist(matIds);
+  if (md.n > 0) {
+    const atgs = matIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
+    const procs= matIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
+    const ats  = matIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
+    const q9extra = ans['ni_q09'] ? ` (até ${ans['ni_q09']})` : '';
+    let p = `No campo da matemática, `;
+    if (md.A === md.n) {
+      p += `${pNome} demonstra excelente domínio: ${joinFrags(atgs)}${q9extra}.`;
+    } else {
+      p += `${pNome} `;
+      const all = [...atgs.map(x=>x+(x.includes('quantifi')?q9extra:'')), ...procs, ...ats];
+      p += joinFrags(all) + '.';
+    }
+    parts.push(p.trim());
+  }
+
+  // ── Ciências ──
+  const cienIds = ['q10','q11','q12'];
+  const cd2 = grupoDist(cienIds);
+  if (cd2.n > 0) {
+    const frags = cienIds.map(f).filter(Boolean);
+    let p = `Em relação ao mundo natural e ao conhecimento do corpo humano, ${pNome} ${joinFrags(frags)}.`;
+    parts.push(p);
+  }
+
+  // ── Arte e Cultura ──
+  const arteIds = ['q14','q15'];
+  const ad = grupoDist(arteIds);
+  if (ad.n > 0) {
+    const frags = arteIds.map(f).filter(Boolean);
+    if (frags.length) parts.push(`Nas atividades de arte e cultura, ${pNome} ${joinFrags(frags)}.`);
+  }
+
+  // ── Atitudes e Convivência ──
+  const atiIds = ['q13','q16','q17','q18','q19','q20'];
+  const atid = grupoDist(atiIds);
+  if (atid.n > 0) {
+    const atgs = atiIds.filter(id=>ans[id]==='A').map(f).filter(Boolean);
+    const procs= atiIds.filter(id=>ans[id]==='P').map(f).filter(Boolean);
+    const ats  = atiIds.filter(id=>ans[id]==='T').map(f).filter(Boolean);
+    let p = `No que diz respeito às atitudes e à convivência escolar, `;
+    if (atid.A === atid.n) {
+      p += `${pNome} demonstra excelente postura: ${joinFrags(atgs)}.`;
+    } else {
+      if (atgs.length) p += `${pNome} ${joinFrags(atgs)}. `;
+      if (procs.length) p += `Está em processo de desenvolver: ${joinFrags(procs)}. `;
+      if (ats.length)  p += `Necessita de atenção em: ${joinFrags(ats)}.`;
+    }
+    parts.push(p.trim());
+  }
+
+  // ── Psicomotricidade ──
+  const psicoIds = ['p01','p02','p03'];
+  const pid = grupoDist(psicoIds);
+  if (pid.n > 0) {
+    const frags = psicoIds.map(f).filter(Boolean);
+    let tone = pid.A >= 2 ? `demonstra bom desenvolvimento motor` : pid.T >= 2 ? `necessita de atenção no desenvolvimento motor` : `está em processo de desenvolvimento motor`;
+    let p = `Nas aulas de psicomotricidade com o Prof. Alyson, ${pNome} ${tone}. `;
+    if (frags.length) p += `Especificamente, ${el} ${joinFrags(frags)}.`;
+    parts.push(p.trim());
+  }
+
+  // ── Observações livres ──
+  if (ans.obs && ans.obs.trim()) parts.push(ans.obs.trim());
+
+  // ── Fechamento ──
+  const total = [...ASPECTOS,...PSICO].filter(i=>ans[i.id]).length;
+  const atingiuCount = [...ASPECTOS,...PSICO].filter(i=>ans[i.id]==='A').length;
+  const ratio = total > 0 ? atingiuCount/total : 0;
+  let fecho = '';
+  if (ratio >= 0.75) {
+    fecho = `${pNome} demonstrou um excelente desempenho neste trimestre, evidenciando dedicação e comprometimento com seu processo de aprendizagem. Parabenizamos ${oa} pelo ótimo trabalho e contamos com a parceria da família para a continuidade desse crescimento.`;
+  } else if (ratio >= 0.4) {
+    fecho = `${pNome} está em processo de desenvolvimento em vários aspectos avaliados neste trimestre. Continuaremos acompanhando ${oa} de perto, e contamos com o apoio e parceria da família para fortalecer a aprendizagem.`;
+  } else {
+    fecho = `${pNome} necessita de atenção especial em diversas áreas avaliadas neste trimestre. É fundamental o acompanhamento próximo da família e da escola, trabalhando juntos para apoiar o desenvolvimento ${da} aluno(a).`;
+  }
+  parts.push(fecho);
+
+  return parts.join('\n\n');
+}
+
+/* ══════════════════════════════════
+   NAVIGATION
+══════════════════════════════════ */
+function updateProgress() {
+  const tot = STEPS.length;
+  const pct = Math.round((step / tot) * 100);
+  document.getElementById('pf').style.width  = pct + '%';
+  document.getElementById('pl-lbl').textContent = `Etapa ${step+1} de ${tot}`;
+  document.getElementById('pl-pct').textContent = pct + '%';
+  document.getElementById('sdots').innerHTML = STEPS.map((s,i)=>{
+    let c = 'sd';
+    if (i < step) c += ' done';
+    else if (i === step) c += ' active';
+    return `<div class="${c}" title="${s.title}" onclick="jumpTo(${i})"></div>`;
+  }).join('');
+}
+
+function updateNav() {
+  document.getElementById('btn-prev').style.visibility = step === 0 ? 'hidden' : 'visible';
+  const nb = document.getElementById('btn-next');
+  if (step === STEPS.length - 1) { nb.textContent = '✨ Gerar Parecer'; nb.className = 'btn btn-g'; }
+  else { nb.textContent = 'Próximo →'; nb.className = 'btn btn-p'; }
+  document.getElementById('warn').classList.remove('show');
+}
+
+function saveStep() {
+  const s = STEPS[step];
+  if (s.id === 'id') {
+    fd.nome   = document.getElementById('f_nome')?.value?.trim() || '';
+    fd.turma  = document.getElementById('f_turma')?.value?.trim()|| '';
+    fd.turno  = document.getElementById('f_turno')?.value        || '';
+    fd.tri    = document.getElementById('f_tri')?.value          || '';
+    fd.ano    = document.getElementById('f_ano')?.value          || '';
+    fd.pres   = document.getElementById('f_pres')?.value         || '';
+    fd.falt   = document.getElementById('f_falt')?.value         || '';
+    fd.prof   = document.getElementById('f_prof')?.value?.trim() || '';
+  }
+  if (s.id === 'parecer') {
+    ans.obs = document.getElementById('f_obs')?.value || '';
+  }
+  // save number inputs for items with hasInput
+  if (s.items) {
+    s.items.filter(i=>i.hasInput).forEach(i=>{
+      const el = document.getElementById('ni_'+i.id);
+      if (el) ans['ni_'+i.id] = el.value.trim();
+    });
+  }
+}
+
+function validate() {
+  const s = STEPS[step];
+  if (s.id === 'id') {
+    const n = document.getElementById('f_nome')?.value?.trim();
+    if (!n) { warn('Informe o nome do(a) aluno(a)'); return false; }
+    fd.nome = n;
+    if (!fd.genero) { warn('Selecione o sexo'); return false; }
+  }
+  return true;
+}
+
+function next() {
+  saveStep();
+  if (!validate()) return;
+  if (step === STEPS.length - 1) { mostrarRpt(); return; }
+  step++;
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function prev() {
+  saveStep();
+  if (step > 0) { step--; renderStep(); window.scrollTo(0,0); }
+}
+
+function jumpTo(n) {
+  if (n <= step) { saveStep(); step = n; renderStep(); window.scrollTo(0,0); }
+}
+
+/* ══════════════════════════════════
+   SHOW REPORT
+══════════════════════════════════ */
+function mostrarRpt() {
+  const txt = gerarParecer();
+
+  // Fill header
+  document.getElementById('r-nome').textContent  = fd.nome  || '';
+  document.getElementById('r-turma').textContent = fd.turma || '';
+  document.getElementById('r-turno').textContent = fd.turno || '';
+  document.getElementById('r-tri').textContent   = fd.tri   || '';
+  document.getElementById('r-data').textContent  = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('r-prof').textContent  = fd.prof ? `Professora: ${fd.prof}` : '';
+
+  // Fill eval table
+  document.getElementById('tbl-body').innerHTML = ASPECTOS.map(item => {
+    const v = ans[item.id] || '';
+    const numExtra = item.hasInput && ans['ni_'+item.id] ? ` ${ans['ni_'+item.id]}` : '';
+    return `<tr>
+      <td>${item.txt.replace(/;$/,'').replace(/\(a\)/g, fd.genero==='F'?'a':'o')}${numExtra}</td>
+      <td class="center">${v==='A'?'<span class="badge badge-A">ATINGIU</span>':'<span class="badge badge-">—</span>'}</td>
+      <td class="center">${v==='P'?'<span class="badge badge-P">EM PROCESSO</span>':'<span class="badge badge-">—</span>'}</td>
+      <td class="center">${v==='T'?'<span class="badge badge-T">ATENÇÃO</span>':'<span class="badge badge-">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tbl-psico').innerHTML = PSICO.map(item => {
+    const v = ans[item.id] || '';
+    return `<tr>
+      <td>${item.txt.replace(/;$/,'')}</td>
+      <td class="center">${v==='A'?'<span class="badge badge-A">ATINGIU</span>':'<span class="badge badge-">—</span>'}</td>
+      <td class="center">${v==='P'?'<span class="badge badge-P">EM PROCESSO</span>':'<span class="badge badge-">—</span>'}</td>
+      <td class="center">${v==='T'?'<span class="badge badge-T">ATENÇÃO</span>':'<span class="badge badge-">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('rpt-text').textContent  = txt;
+  document.getElementById('rpt-editor').value      = txt;
+
+  document.getElementById('form-sec').style.display = 'none';
+  document.getElementById('nav').style.display      = 'none';
+  document.getElementById('sdots').style.display    = 'none';
+  document.getElementById('rpt').style.display      = 'block';
+
+  document.getElementById('hdr-prog').innerHTML =
+    '<span style="font-size:13px;color:var(--green);font-weight:700">✅ Parecer gerado!</span>';
+
+  window.scrollTo(0, 0);
+}
+
+/* ══════════════════════════════════
+   REPORT ACTIONS
+══════════════════════════════════ */
+let editMode = false;
+function toggleEdit() {
+  editMode = !editMode;
+  const t = document.getElementById('rpt-text');
+  const e = document.getElementById('rpt-editor');
+  const b = document.getElementById('btn-ed');
+  if (editMode) { t.style.display='none'; e.style.display='block'; e.focus(); b.textContent='✔ Salvar'; }
+  else { t.textContent=e.value; t.style.display='block'; e.style.display='none'; b.textContent='✏️ Editar texto'; toast('✅ Texto salvo'); }
+}
+
+function copyRpt() {
+  const body = editMode ? document.getElementById('rpt-editor').value : document.getElementById('rpt-text').textContent;
+  navigator.clipboard.writeText(body)
+    .then(()=>toast('📋 Parecer copiado!'))
+    .catch(()=>toast('⚠️ Não foi possível copiar'));
+}
+
+function novoRpt() {
+  if (!confirm('Iniciar novo parecer? Os dados atuais serão apagados.')) return;
+  fd={}; ans={}; step=0; editMode=false;
+  document.getElementById('rpt').style.display      = 'none';
+  document.getElementById('form-sec').style.display = 'block';
+  document.getElementById('nav').style.display      = 'flex';
+  document.getElementById('sdots').style.display    = 'flex';
+  document.getElementById('hdr-prog').innerHTML = `
+    <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
+    <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>`;
+  renderStep(); window.scrollTo(0,0);
+}
+
+/* ══════════════════════════════════
+   HELPERS
+══════════════════════════════════ */
+function selGn(e, g) {
+  fd.genero = g;
+  document.querySelectorAll('.gn-opt').forEach(o=>o.classList.remove('on'));
+  e.currentTarget.classList.add('on');
+}
+
+function selItem(id, val, btn) {
+  ans[id] = val;
+  const row = btn.closest('.item-btns');
+  row.querySelectorAll('.rb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function warn(msg) {
+  const w = document.getElementById('warn');
+  document.getElementById('warn-txt').textContent = msg;
+  w.classList.add('show');
+  setTimeout(()=>w.classList.remove('show'), 3500);
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), 2800);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+renderStep();
+</script>
+</body>
+</html>
