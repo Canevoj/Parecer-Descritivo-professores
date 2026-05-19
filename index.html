@@ -76,14 +76,6 @@
     textarea { width: 100%; padding: 10px 13px; border: 1.5px solid var(--gray-200); border-radius: 8px; font-size: 14px; color: var(--gray-800); font-family: inherit; resize: vertical; min-height: 120px; transition: border-color .2s; }
     textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
 
-    /* ─── GENDER ─── */
-    .gn-row { display: flex; gap: 10px; }
-    .gn-opt {
-      flex: 1; padding: 10px; border: 2px solid var(--gray-200); border-radius: 9px;
-      text-align: center; cursor: pointer; font-weight: 600; font-size: 13px; transition: all .15s;
-    }
-    .gn-opt:hover, .gn-opt.on { border-color: var(--blue); background: var(--blue-l); color: var(--blue); }
-
     /* ─── ITEM ROW ─── */
     .item-row {
       display: flex; align-items: flex-start; gap: 12px;
@@ -493,11 +485,6 @@ function htmlId() {
       <div class="fg2">
         <div class="fg full"><span class="lb">Nome completo do(a) aluno(a) *</span>
           <input type="text" id="f_nome" placeholder="Ex: Maria Eduarda Santos" value="${esc(fd.nome||'')}"></div>
-        <div class="fg"><span class="lb">Sexo *</span>
-          <div class="gn-row">
-            <div class="gn-opt${fd.genero==='F'?' on':''}" onclick="selGn(event,'F')">👧 Feminino</div>
-            <div class="gn-opt${fd.genero==='M'?' on':''}" onclick="selGn(event,'M')">👦 Masculino</div>
-          </div></div>
         <div class="fg"><span class="lb">Turma</span>
           <input type="text" id="f_turma" placeholder="Ex: 1A" value="${esc(fd.turma||'')}"></div>
         <div class="fg"><span class="lb">Turno</span>
@@ -570,18 +557,6 @@ function htmlParecer() {
 function gerarParecer() {
   const nome  = fd.nome  || 'O(A) aluno(a)';
   const pNome = nome.split(' ')[0];
-  const g     = fd.genero || 'M';
-  const F     = g === 'F';
-  const el    = F ? 'ela' : 'ele';
-  const oa    = F ? 'a'   : 'o';
-  const da    = F ? 'da'  : 'do';
-
-  const adj = t => {
-    if (!t) return t;
-    return F
-      ? t.replace(/\borganizado\b/g,'organizada').replace(/\bassíduo\b/g,'assídua')
-      : t.replace(/\borganizada\b/g,'organizado').replace(/\bassídua\b/g,'assíduo');
-  };
 
   // Retorna o nível geral de um grupo: 'A', 'P' ou 'T'
   const nivelGrupo = ids => {
@@ -598,7 +573,7 @@ function gerarParecer() {
   const itensAtencao = ids => ids
     .filter(id => ans[id]==='T')
     .slice(0, 2)
-    .map(id => { const item = [...ASPECTOS,...PSICO].find(i=>i.id===id); return item ? adj(item.fr['T']) : null; })
+    .map(id => { const item = [...ASPECTOS,...PSICO].find(i=>i.id===id); return item ? item.fr['T'] : null; })
     .filter(Boolean);
 
   const tri = fd.tri || '1º Trimestre';
@@ -639,8 +614,8 @@ function gerarParecer() {
   // ── Parágrafo 1: Aprendizagem (ling + mat + cien) ──
   const areas1 = [
     nvLing  && `${pNome} ${resumo.ling[nvLing]}`,
-    nvMat   && `${el} ${resumo.mat[nvMat]}`,
-    nvCien  && `${el} ${resumo.cien[nvCien]}`,
+    nvMat   && `${pNome} ${resumo.mat[nvMat]}`,
+    nvCien  && `${pNome} ${resumo.cien[nvCien]}`,
   ].filter(Boolean);
 
   if (areas1.length) {
@@ -658,7 +633,7 @@ function gerarParecer() {
   // ── Parágrafo 2: Atitudes e Arte ──
   const areas2 = [
     nvAtit && `${pNome} ${resumo.atit[nvAtit]}`,
-    nvArte && `${el} ${resumo.arte[nvArte]}`,
+    nvArte && `${pNome} ${resumo.arte[nvArte]}`,
   ].filter(Boolean);
 
   if (areas2.length) {
@@ -678,8 +653,8 @@ function gerarParecer() {
   const fecho = ratio >= 0.7
     ? `Parabéns, ${pNome}! Contamos com a parceria da família para a continuidade desse ótimo desempenho.`
     : ratio >= 0.4
-    ? `Continuaremos acompanhando ${oa} de perto. Contamos com o apoio da família para fortalecer a aprendizagem.`
-    : `É fundamental o acompanhamento próximo da família para apoiar o desenvolvimento ${da} aluno(a) nas áreas indicadas.`;
+    ? `Continuaremos acompanhando de perto. Contamos com o apoio da família para fortalecer a aprendizagem.`
+    : `É fundamental o acompanhamento próximo da família para apoiar o desenvolvimento do(a) aluno(a) nas áreas indicadas.`;
   parts.push(fecho);
 
   return parts.join('\n\n');
@@ -740,7 +715,6 @@ function validate() {
     const n = document.getElementById('f_nome')?.value?.trim();
     if (!n) { warn('Informe o nome do(a) aluno(a)'); return false; }
     fd.nome = n;
-    if (!fd.genero) { warn('Selecione o sexo'); return false; }
   }
   return true;
 }
@@ -785,7 +759,7 @@ function mostrarRpt() {
   document.getElementById('tbl-body').innerHTML = ASPECTOS.map(item => {
     const v = ans[item.id] || '';
     const numExtra = item.hasInput && ans['ni_'+item.id] ? ` ${ans['ni_'+item.id]}` : '';
-    const txt = item.txt.replace(/;$/,'').replace(/\(a\)/g, fd.genero==='F' ? 'a' : 'o') + numExtra;
+    const txt = item.txt.replace(/;$/,'') + numExtra;
     return `<tr>
       <td>${txt}</td>
       <td class="chk">${v==='A' ? '<span class="mark-A">✓</span>' : ''}</td>
@@ -841,12 +815,6 @@ function novoRpt() {
 /* ══════════════════════════════════
    HELPERS
 ══════════════════════════════════ */
-function selGn(e, g) {
-  fd.genero = g;
-  document.querySelectorAll('.gn-opt').forEach(o=>o.classList.remove('on'));
-  e.currentTarget.classList.add('on');
-}
-
 function selItem(id, val, btn) {
   ans[id] = val;
   const row = btn.closest('.item-btns');
