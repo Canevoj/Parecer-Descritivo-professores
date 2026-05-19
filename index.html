@@ -181,14 +181,24 @@
     .toast { position: fixed; bottom: 18px; right: 18px; background: var(--gray-900); color: #fff; padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(6px); transition: all .25s; z-index: 999; }
     .toast.on { opacity: 1; transform: translateY(0); }
 
+    /* ─── BATCH PRINT ─── */
+    #batch-print { display: none; }
+    .batch-break { page-break-after: always; height: 0; }
+
     /* ─── PRINT ─── */
     @page { margin: 0; }   /* removes Chrome's date/title/URL headers and footers */
     @media print {
-      .hdr, .nav, .rpt-actions-bar, .sdots, #form-sec, .toast { display: none !important; }
+      /* Normal single-student print */
+      .hdr, .nav, .rpt-actions-bar, .sdots, #form-sec, .toast, #batch-print { display: none !important; }
       #rpt { display: block !important; }
       .paper { box-shadow: none; padding: 10mm 12mm; max-width: 100%; }
       body { background: #fff; margin: 0; }
       .main { padding: 0; }
+
+      /* Batch mode: show #batch-print, hide single-student view */
+      body.batch-mode #rpt { display: none !important; }
+      body.batch-mode #batch-print { display: block !important; }
+      body.batch-mode .paper { box-shadow: none; padding: 10mm 12mm; max-width: 100%; }
     }
 
     /* ─── RESPONSIVE ─── */
@@ -222,11 +232,15 @@
   <div id="rpt">
     <!-- Action bar (screen only, hidden on print) -->
     <div class="rpt-actions-bar">
-      <span style="font-size:13px;font-weight:700;color:var(--green)">✅ Parecer gerado!</span>
+      <div id="rpt-status"><span style="font-size:13px;font-weight:700;color:var(--green)">✅ Parecer gerado!</span></div>
       <div class="rpt-acts">
         <button class="btn btn-s" id="btn-ed" onclick="toggleEdit()">✏️ Editar texto</button>
         <button class="btn btn-s" onclick="copyRpt()">📋 Copiar</button>
-        <button class="btn btn-s" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="btn btn-s" onclick="window.print()">🖨️ Este aluno</button>
+        <button class="btn btn-s" onclick="baixarDOCX(false)">⬇️ Baixar DOCX</button>
+        <button class="btn btn-s" onclick="adicionarAluno()">➕ Próximo aluno</button>
+        <button class="btn btn-g" id="btn-turma" style="display:none" onclick="imprimirTurma()">📄 Imprimir turma</button>
+        <button class="btn btn-g" id="btn-docx-turma" style="display:none" onclick="baixarDOCX(true)">⬇️ DOCX turma</button>
         <button class="btn btn-p" onclick="novoRpt()">＋ Novo parecer</button>
       </div>
     </div>
@@ -308,6 +322,10 @@
 
     </div><!-- /paper -->
   </div>
+
+  <!-- Batch print container — populated by imprimirTurma(), never shown on screen -->
+  <div id="batch-print"></div>
+
   <div class="nav" id="nav">
     <button class="btn btn-s" id="btn-prev" onclick="prev()">← Anterior</button>
     <button class="btn btn-p" id="btn-next" onclick="next()">Próximo →</button>
@@ -324,6 +342,7 @@
 let step = 0;
 let fd   = {};   // form/identification data
 let ans  = {};   // item answers: {id: 'A'|'P'|'T'}
+let relatorios = []; // batch: array of {fd, ans} already generated
 
 const ASPECTOS = [
   // Linguagem
@@ -555,14 +574,16 @@ function htmlParecer() {
 /* ══════════════════════════════════
    TEXT GENERATION
 ══════════════════════════════════ */
-function gerarParecer() {
-  const nome  = fd.nome  || 'O(A) aluno(a)';
+function gerarParecer(fdData, ansData) {
+  const f = fdData || fd;
+  const a = ansData || ans;
+  const nome  = f.nome  || 'O(A) aluno(a)';
   const pNome = nome.split(' ')[0];
 
   // Retorna o nível geral de um grupo: 'A', 'P' ou 'T'
   const nivelGrupo = ids => {
     let A=0, P=0, T=0;
-    ids.forEach(id => { if(ans[id]==='A') A++; else if(ans[id]==='P') P++; else if(ans[id]==='T') T++; });
+    ids.forEach(id => { if(a[id]==='A') A++; else if(a[id]==='P') P++; else if(a[id]==='T') T++; });
     const n = A+P+T;
     if (!n) return null;
     if (A/n >= 0.67) return 'A';
@@ -572,21 +593,19 @@ function gerarParecer() {
 
   // Retorna lista de itens em ATENÇÃO de um grupo (máx 2, para não alongar)
   const itensAtencao = ids => ids
-    .filter(id => ans[id]==='T')
+    .filter(id => a[id]==='T')
     .slice(0, 2)
     .map(id => { const item = [...ASPECTOS,...PSICO].find(i=>i.id===id); return item ? item.fr['T'] : null; })
     .filter(Boolean);
 
-  const tri = fd.tri || '1º Trimestre';
-  const ano = fd.ano || new Date().getFullYear();
-  const q9  = ans['ni_q09'] ? ` (quantifica até ${ans['ni_q09']})` : '';
+  const q9 = a['ni_q09'] ? ` (quantifica até ${a['ni_q09']})` : '';
 
   // ── Níveis por área ──
-  const nvLing  = nivelGrupo(['q01','q02','q03','q04','q05','q06']);
-  const nvMat   = nivelGrupo(['q07','q08','q09']);
-  const nvCien  = nivelGrupo(['q10','q11','q12']);
-  const nvAtit  = nivelGrupo(['q13','q16','q17','q18','q19','q20']);
-  const nvArte  = nivelGrupo(['q14','q15']);
+  const nvLing = nivelGrupo(['q01','q02','q03','q04','q05','q06']);
+  const nvMat  = nivelGrupo(['q07','q08','q09']);
+  const nvCien = nivelGrupo(['q10','q11','q12']);
+  const nvAtit = nivelGrupo(['q13','q16','q17','q18','q19','q20']);
+  const nvArte = nivelGrupo(['q14','q15']);
 
   // Frases resumidas por área e nível
   const resumo = {
@@ -614,14 +633,13 @@ function gerarParecer() {
 
   // ── Parágrafo 1: Aprendizagem (ling + mat + cien) ──
   const areas1 = [
-    nvLing  && `${pNome} ${resumo.ling[nvLing]}`,
-    nvMat   && `${pNome} ${resumo.mat[nvMat]}`,
-    nvCien  && `${pNome} ${resumo.cien[nvCien]}`,
+    nvLing && `${pNome} ${resumo.ling[nvLing]}`,
+    nvMat  && `${pNome} ${resumo.mat[nvMat]}`,
+    nvCien && `${pNome} ${resumo.cien[nvCien]}`,
   ].filter(Boolean);
 
   if (areas1.length) {
     let p1 = areas1.join('; ') + '.';
-    // Destacar itens em Atenção (até 2 por área)
     const ats1 = [
       ...itensAtencao(['q01','q02','q03','q04','q05','q06']),
       ...itensAtencao(['q07','q08','q09']),
@@ -645,11 +663,11 @@ function gerarParecer() {
   }
 
   // ── Observações livres ──
-  if (ans.obs && ans.obs.trim()) parts.push(ans.obs.trim());
+  if (a.obs && a.obs.trim()) parts.push(a.obs.trim());
 
   // ── Fechamento ──
-  const total = ASPECTOS.filter(i=>ans[i.id]).length;
-  const nA    = ASPECTOS.filter(i=>ans[i.id]==='A').length;
+  const total = ASPECTOS.filter(i=>a[i.id]).length;
+  const nA    = ASPECTOS.filter(i=>a[i.id]==='A').length;
   const ratio = total > 0 ? nA/total : 0;
   const fecho = ratio >= 0.7
     ? `Parabéns, ${pNome}! Contamos com a parceria da família para a continuidade desse ótimo desempenho.`
@@ -659,6 +677,76 @@ function gerarParecer() {
   parts.push(fecho);
 
   return parts.join('\n\n');
+}
+
+/* Gera o HTML completo de um paper para um aluno (usado no batch print) */
+function gerarHTMLPaper(f, a) {
+  const txt = gerarParecer(f, a);
+  const date = new Date().toLocaleDateString('pt-BR');
+  const tblRows = ASPECTOS.map(item => {
+    const v = a[item.id] || '';
+    const numExtra = item.hasInput && a['ni_'+item.id] ? ` ${a['ni_'+item.id]}` : '';
+    const itemTxt = esc(item.txt.replace(/;$/,'') + numExtra);
+    return `<tr>
+      <td>${itemTxt}</td>
+      <td class="chk">${v==='A'?'<span class="mark-A">✓</span>':''}</td>
+      <td class="chk">${v==='P'?'<span class="mark-P">✓</span>':''}</td>
+      <td class="chk">${v==='T'?'<span class="mark-T">✓</span>':''}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="paper">
+    <table class="f-hdr">
+      <tr>
+        <td class="logo-cell" rowspan="2">
+          <div class="logo-inner">
+            <img class="school-logo" src="logo.jpg" alt="Logo Escola">
+            <div>
+              <div class="school-name">ESCOLA LUTERANA COMUNITÁRIA DE ENSINO FUNDAMENTAL<br>SÃO MATEUS</div>
+              <div class="school-sub">Mantenedora: Associação Comunitária Integrada</div>
+            </div>
+          </div>
+        </td>
+        <td class="tri-label">${esc(f.tri||'')}</td>
+        <td class="data-cell">DATA: ${date}</td>
+      </tr>
+      <tr>
+        <td>Ano: ${esc(f.ano||'')}</td>
+        <td>Turma: ${esc(f.turma||'')}</td>
+      </tr>
+      <tr class="field-row">
+        <td colspan="3"><span class="field-lbl">Nome do aluno:</span> ${esc(f.nome||'')}</td>
+      </tr>
+      <tr class="field-row">
+        <td colspan="2"><span class="field-lbl">Professora regente:</span> ${esc(f.prof||'')}</td>
+        <td><span class="field-lbl">Turno:</span> ${esc(f.turno||'')}</td>
+      </tr>
+      <tr class="field-row">
+        <td><span class="field-lbl">Presenças:</span> ${esc(f.pres||'')}</td>
+        <td colspan="2"><span class="field-lbl">Faltas:</span> ${esc(f.falt||'')}</td>
+      </tr>
+    </table>
+    <div class="f-title">PARECER AVALIATIVO – 1º ANO - ${esc(f.tri||'')}</div>
+    <div class="f-intro">Durante o trimestre foram oportunizadas situações em que o aluno pudesse, progressivamente, atingir os objetivos propostos. A avaliação abaixo é realizada através da observação do desempenho do aluno, de acordo com sua socialização, participação, concentração, memorização, criatividade e atividades realizadas em sala de aula.</div>
+    <div class="f-legend">
+      <span><strong>ATINGIU</strong>= rendimento satisfatório</span>
+      <span><strong>EM PROCESSO</strong>= rendimento a melhorar</span>
+      <span><strong>ATENÇÃO</strong>= necessita dedicação para melhorar o rendimento</span>
+    </div>
+    <table class="asp-table">
+      <thead>
+        <tr><td class="f-asp-title" colspan="4">ASPECTOS IMPORTANTES</td></tr>
+        <tr><th style="width:64%"></th><th>ATINGIU</th><th>EM PROCESSO</th><th>ATENÇÃO</th></tr>
+      </thead>
+      <tbody>${tblRows}</tbody>
+    </table>
+    <div class="f-parecer-lbl">PARECER DESCRITIVO:</div>
+    <div class="f-parecer-box">${esc(txt)}</div>
+    <div class="f-sigs">
+      <div class="f-sig"><div class="f-sig-line"></div>Professora</div>
+      <div class="f-sig"><div class="f-sig-line"></div>Supervisão</div>
+    </div>
+  </div>`;
 }
 
 /* ══════════════════════════════════
@@ -760,17 +848,30 @@ function mostrarRpt() {
   document.getElementById('tbl-body').innerHTML = ASPECTOS.map(item => {
     const v = ans[item.id] || '';
     const numExtra = item.hasInput && ans['ni_'+item.id] ? ` ${ans['ni_'+item.id]}` : '';
-    const txt = item.txt.replace(/;$/,'') + numExtra;
+    const itemTxt = item.txt.replace(/;$/,'') + numExtra;
     return `<tr>
-      <td>${txt}</td>
+      <td>${itemTxt}</td>
       <td class="chk">${v==='A' ? '<span class="mark-A">✓</span>' : ''}</td>
       <td class="chk">${v==='P' ? '<span class="mark-P">✓</span>' : ''}</td>
       <td class="chk">${v==='T' ? '<span class="mark-T">✓</span>' : ''}</td>
     </tr>`;
   }).join('');
 
-  document.getElementById('rpt-text').textContent  = txt;
-  document.getElementById('rpt-editor').value      = txt;
+  document.getElementById('rpt-text').textContent = txt;
+  document.getElementById('rpt-editor').value     = txt;
+
+  // Update batch buttons
+  const total = relatorios.length + 1;
+  document.getElementById('rpt-status').innerHTML =
+    total > 1
+      ? `<span style="font-size:13px;font-weight:700;color:var(--green)">✅ Aluno ${total} pronto!</span>&nbsp;<span style="font-size:12px;color:var(--gray-500)">${total} alunos na turma</span>`
+      : `<span style="font-size:13px;font-weight:700;color:var(--green)">✅ Parecer gerado!</span>`;
+  const btnT = document.getElementById('btn-turma');
+  btnT.textContent = `📄 Imprimir turma (${total})`;
+  btnT.style.display = relatorios.length > 0 ? '' : 'none';
+  const btnDT = document.getElementById('btn-docx-turma');
+  btnDT.textContent = `⬇️ DOCX turma (${total})`;
+  btnDT.style.display = relatorios.length > 0 ? '' : 'none';
 
   document.getElementById('form-sec').style.display = 'none';
   document.getElementById('nav').style.display      = 'none';
@@ -800,9 +901,64 @@ function copyRpt() {
     .catch(()=>toast('⚠️ Não foi possível copiar'));
 }
 
+function adicionarAluno() {
+  // Save current student to batch queue
+  relatorios.push({ fd: Object.assign({}, fd), ans: Object.assign({}, ans) });
+  toast(`✅ ${fd.nome.split(' ')[0]} salvo! ${relatorios.length} aluno(s) na fila.`);
+
+  // Keep class-level info, clear student-specific data
+  const keep = { turma: fd.turma, tri: fd.tri, ano: fd.ano, prof: fd.prof, turno: fd.turno };
+  fd = Object.assign({}, keep);
+  ans = {};
+  step = 0;
+  editMode = false;
+
+  document.getElementById('rpt').style.display      = 'none';
+  document.getElementById('form-sec').style.display = 'block';
+  document.getElementById('nav').style.display      = 'flex';
+  document.getElementById('sdots').style.display    = 'flex';
+  document.getElementById('hdr-prog').innerHTML = `
+    <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
+    <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>`;
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+function imprimirTurma() {
+  // Build array: all saved + current
+  const todos = [...relatorios, { fd: Object.assign({}, fd), ans: Object.assign({}, ans) }];
+
+  // If editing mode is active, capture the edited text for current student
+  if (editMode) {
+    const edited = document.getElementById('rpt-editor').value;
+    todos[todos.length - 1].parecerEditado = edited;
+  }
+
+  // Generate HTML for all students
+  const papeis = todos.map((r, i) => {
+    const paperHTML = r.parecerEditado
+      ? gerarHTMLPaper(r.fd, r.ans).replace(
+          /<div class="f-parecer-box">[\s\S]*?<\/div>/,
+          `<div class="f-parecer-box">${esc(r.parecerEditado)}</div>`)
+      : gerarHTMLPaper(r.fd, r.ans);
+    const sep = i < todos.length - 1 ? '<div class="batch-break"></div>' : '';
+    return paperHTML + sep;
+  }).join('');
+
+  const bp = document.getElementById('batch-print');
+  bp.innerHTML = papeis;
+  document.body.classList.add('batch-mode');
+  window.print();
+  document.body.classList.remove('batch-mode');
+  bp.innerHTML = '';
+}
+
 function novoRpt() {
-  if (!confirm('Iniciar novo parecer? Os dados atuais serão apagados.')) return;
-  fd={}; ans={}; step=0; editMode=false;
+  const msg = relatorios.length > 0
+    ? `Iniciar novo parecer? Os dados de todos os ${relatorios.length + 1} alunos da turma serão apagados.`
+    : 'Iniciar novo parecer? Os dados atuais serão apagados.';
+  if (!confirm(msg)) return;
+  fd={}; ans={}; step=0; editMode=false; relatorios=[];
   document.getElementById('rpt').style.display      = 'none';
   document.getElementById('form-sec').style.display = 'block';
   document.getElementById('nav').style.display      = 'flex';
@@ -811,6 +967,185 @@ function novoRpt() {
     <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
     <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>`;
   renderStep(); window.scrollTo(0,0);
+}
+
+/* ══════════════════════════════════
+   DOCX GENERATION
+══════════════════════════════════ */
+async function baixarDOCX(turmaMode) {
+  if (!window.docx) { toast('⚠️ Biblioteca DOCX não carregada'); return; }
+  const d = window.docx;
+  toast('⏳ Gerando DOCX...');
+
+  let logoData = null;
+  try {
+    const resp = await fetch('logo.jpg');
+    logoData = await resp.arrayBuffer();
+  } catch(_) {}
+
+  const students = turmaMode
+    ? [...relatorios, { fd: Object.assign({}, fd), ans: Object.assign({}, ans) }]
+    : [{ fd: Object.assign({}, fd), ans: Object.assign({}, ans) }];
+
+  const date = new Date().toLocaleDateString('pt-BR');
+  const allKids = [];
+  students.forEach((s, i) => {
+    if (i > 0) allKids.push(new d.Paragraph({ children: [new d.PageBreak()] }));
+    _buildDOCX(d, s.fd, s.ans, logoData, date, allKids);
+  });
+
+  const doc = new d.Document({
+    sections: [{ properties: { page: {
+      size: { width: 11906, height: 16838 },
+      margin: { top: 567, right: 567, bottom: 567, left: 567 }
+    }}, children: allKids }]
+  });
+
+  const blob = await d.Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement('a');
+  el.href = url;
+  el.download = turmaMode
+    ? `Pareceres_Turma_${(fd.turma||'turma')}_${(fd.tri||'').replace(/\s/g,'_')}.docx`
+    : `Parecer_${(fd.nome||'aluno').split(' ')[0]}.docx`;
+  el.click();
+  URL.revokeObjectURL(url);
+  toast('✅ DOCX baixado!');
+}
+
+function _buildDOCX(d, f, a, logo, date, kids) {
+  const W = 10772;
+  const BD = { style: d.BorderStyle.SINGLE, size: 4, color: '000000' };
+  const B4 = { top: BD, bottom: BD, left: BD, right: BD };
+  const BN = { style: d.BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+  const NB = { top: BN, bottom: BN, left: BN, right: BN };
+
+  const r = (text, sz=18, bold=false, col='000000') =>
+    new d.TextRun({ text, font: 'Arial', size: sz, bold, color: col });
+  const p = (runs, center=false, before=0, after=0) => new d.Paragraph({
+    alignment: center ? d.AlignmentType.CENTER : d.AlignmentType.LEFT,
+    spacing: { before, after },
+    children: Array.isArray(runs) ? runs : [runs]
+  });
+  const tc = (content, opts={}) => new d.TableCell({
+    borders: opts.nb ? NB : B4,
+    ...(opts.w ? { width: { size: opts.w, type: d.WidthType.DXA } } : {}),
+    ...(opts.cs ? { columnSpan: opts.cs } : {}),
+    margins: { top: opts.mt||60, bottom: opts.mb||60, left: 100, right: 100 },
+    ...(opts.sh ? { shading: { fill: opts.sh, type: 'clear' } } : {}),
+    children: Array.isArray(content) ? content : [content]
+  });
+  const tr = (...cells) => new d.TableRow({ children: cells });
+  const mkTable = (cols, rows) => new d.Table({
+    width: { size: cols.reduce((s,c)=>s+c,0), type: d.WidthType.DXA },
+    columnWidths: cols, rows
+  });
+
+  // ── School header ──
+  const lW = Math.round(W * 0.52), rW = W - lW;
+  const logoContent = [];
+  if (logo) logoContent.push(new d.Paragraph({
+    alignment: d.AlignmentType.CENTER,
+    spacing: { before: 0, after: 60 },
+    children: [new d.ImageRun({
+      type: 'jpg', data: logo, transformation: { width: 50, height: 50 },
+      altText: { title: 'Logo', description: 'Logo', name: 'Logo' }
+    })]
+  }));
+  logoContent.push(
+    p(r('ESCOLA LUTERANA COMUNITÁRIA DE ENSINO FUNDAMENTAL', 17, true), true),
+    p(r('SÃO MATEUS', 17, true), true),
+    p(r('Mantenedora: Associação Comunitária Integrada', 15), true)
+  );
+  kids.push(mkTable([lW, rW], [
+    tr(
+      tc(logoContent, { w: lW }),
+      tc([
+        p(r(f.tri||'', 18, true), true),
+        p(r(`DATA: ${date}`, 17)),
+        p(r(`Ano: ${f.ano||''}`, 17)),
+        p(r(`Turma: ${f.turma||''}`, 17)),
+      ], { w: rW })
+    )
+  ]));
+
+  // ── Student fields ──
+  const c1=Math.round(W*.52), c2=Math.round(W*.24), c3=W-c1-c2;
+  kids.push(mkTable([c1,c2,c3], [
+    tr(tc(p(r(`Nome do aluno: ${f.nome||''}`, 18)), { w: W, cs: 3 })),
+    tr(
+      tc(p(r(`Professora: ${f.prof||''}`, 17)), { w: c1+c2, cs: 2 }),
+      tc(p(r(`Turno: ${f.turno||''}`, 17)), { w: c3 })
+    ),
+    tr(
+      tc(p(r(`Presenças: ${f.pres||''}`, 17)), { w: c1 }),
+      tc(p(r(`Faltas: ${f.falt||''}`, 17)), { w: c2+c3, cs: 2 })
+    ),
+  ]));
+
+  // ── Title, intro, legend ──
+  kids.push(
+    p(r(`PARECER AVALIATIVO – 1º ANO - ${f.tri||''}`, 22, true), true, 120, 60),
+    p(r('Durante o trimestre foram oportunizadas situações em que o aluno pudesse, progressivamente, atingir os objetivos propostos. A avaliação abaixo é realizada através da observação do desempenho do aluno, de acordo com sua socialização, participação, concentração, memorização, criatividade e atividades realizadas em sala de aula.', 17), false, 0, 60),
+    new d.Paragraph({
+      spacing: { before: 0, after: 80 },
+      children: [
+        r('ATINGIU', 16, true), r('= rendimento satisfatório   ', 16),
+        r('EM PROCESSO', 16, true), r('= rendimento a melhorar   ', 16),
+        r('ATENÇÃO', 16, true), r('= necessita dedicação para melhorar o rendimento', 16),
+      ]
+    })
+  );
+
+  // ── Aspects table ──
+  const aW=Math.round(W*.64), cW=Math.round((W-aW)/3);
+  const aspW = aW + cW*3;
+  const aspRows = [
+    tr(new d.TableCell({
+      borders: B4, columnSpan: 4,
+      width: { size: aspW, type: d.WidthType.DXA },
+      shading: { fill: 'EEEEEE', type: 'clear' },
+      margins: { top: 60, bottom: 60, left: 100, right: 100 },
+      children: [p(r('ASPECTOS IMPORTANTES', 18, true), true)]
+    })),
+    tr(
+      tc(p(r('')), { w: aW, sh: 'F5F5F5' }),
+      tc(p(r('ATINGIU', 16, true), true), { w: cW, sh: 'F5F5F5' }),
+      tc(p(r('EM PROCESSO', 16, true), true), { w: cW, sh: 'F5F5F5' }),
+      tc(p(r('ATENÇÃO', 16, true), true), { w: cW, sh: 'F5F5F5' }),
+    ),
+    ...ASPECTOS.map(item => {
+      const v = a[item.id] || '';
+      const numExtra = item.hasInput && a['ni_'+item.id] ? ` ${a['ni_'+item.id]}` : '';
+      const mark = (col, color) => tc(
+        p(r(v===col?'✓':'', 20, true, v===col?color:'FFFFFF'), true),
+        { w: cW, mt: 40, mb: 40 }
+      );
+      return tr(
+        tc(p(r(item.txt.replace(/;$/,'')+numExtra, 16)), { w: aW, mt: 40, mb: 40 }),
+        mark('A','16A34A'), mark('P','D97706'), mark('T','DC2626')
+      );
+    })
+  ];
+  kids.push(mkTable([aW, cW, cW, cW], aspRows));
+
+  // ── Parecer descritivo ──
+  const parecerTxt = gerarParecer(f, a);
+  kids.push(
+    p(r('PARECER DESCRITIVO:', 18, true), false, 120, 60),
+    mkTable([W], [tr(new d.TableCell({
+      borders: B4, width: { size: W, type: d.WidthType.DXA },
+      margins: { top: 80, bottom: 80, left: 120, right: 120 },
+      children: parecerTxt.split('\n\n').map(txt => p(r(txt, 18), false, 0, 80))
+    }))])
+  );
+
+  // ── Signatures ──
+  const sw = Math.floor(W/2);
+  kids.push(mkTable([sw, W-sw], [tr(
+    tc([p(r('________________________________',18),true,360,0), p(r('Professora',18),true)], {nb:true}),
+    tc([p(r('________________________________',18),true,360,0), p(r('Supervisão',18),true)], {nb:true}),
+  )]));
 }
 
 /* ══════════════════════════════════
@@ -845,5 +1180,6 @@ function esc(s) {
 ══════════════════════════════════ */
 renderStep();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 </body>
 </html>
