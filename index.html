@@ -182,11 +182,12 @@
     .toast.on { opacity: 1; transform: translateY(0); }
 
     /* ─── PRINT ─── */
+    @page { margin: 0; }   /* removes Chrome's date/title/URL headers and footers */
     @media print {
-      .hdr, .nav, .rpt-actions-bar, .sdots, #form-sec { display: none !important; }
+      .hdr, .nav, .rpt-actions-bar, .sdots, #form-sec, .toast { display: none !important; }
       #rpt { display: block !important; }
-      .paper { box-shadow: none; padding: 0; }
-      body { background: #fff; }
+      .paper { box-shadow: none; padding: 10mm 12mm; max-width: 100%; }
+      body { background: #fff; margin: 0; }
       .main { padding: 0; }
     }
 
