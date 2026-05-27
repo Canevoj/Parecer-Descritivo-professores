@@ -479,6 +479,7 @@ const STEPS = [
   { id:'cien', title:'Ciências e Corpo', items: ASPECTOS.filter(x=>x.grupo==='cien'), desc:'Itens 10 a 12' },
   { id:'atit', title:'Convivência e Atitudes', items: ASPECTOS.filter(x=>x.grupo==='atit'), desc:'Itens 13 a 20' },
   { id:'arte', title:'Arte e Cultura', items: ASPECTOS.filter(x=>x.grupo==='arte'), desc:'Itens 14 a 15' },
+  { id:'psico', title:'Psicomotricidade – Prof. Alyson', items: PSICO, desc:'Itens 1 a 3' },
   { id:'parecer', title:'Parecer Descritivo' },
 ];
 
@@ -662,6 +663,15 @@ function gerarParecer(fdData, ansData) {
     parts.push(p2);
   }
 
+  // ── Parágrafo 3: Psicomotricidade ──
+  const nvPsico = nivelGrupo(['p01','p02','p03']);
+  if (nvPsico) {
+    let p3 = `${pNome} ${resumo.psico[nvPsico]}.`;
+    const ats3 = itensAtencao(['p01','p02','p03']);
+    if (ats3.length) p3 += ` Ponto de atenção: ${ats3.join('; ')}.`;
+    parts.push(p3);
+  }
+
   // ── Observações livres ──
   if (a.obs && a.obs.trim()) parts.push(a.obs.trim());
 
@@ -682,8 +692,8 @@ function gerarParecer(fdData, ansData) {
 /* Gera o HTML completo de um paper para um aluno (usado no batch print) */
 function gerarHTMLPaper(f, a) {
   const txt = gerarParecer(f, a);
-  const date = new Date().toLocaleDateString('pt-BR');
-  const tblRows = ASPECTOS.map(item => {
+  const date = '';
+  const tblRowsAsp = ASPECTOS.map(item => {
     const v = a[item.id] || '';
     const numExtra = item.hasInput && a['ni_'+item.id] ? ` ${a['ni_'+item.id]}` : '';
     const itemTxt = esc(item.txt.replace(/;$/,'') + numExtra);
@@ -693,7 +703,20 @@ function gerarHTMLPaper(f, a) {
       <td class="chk">${v==='P'?'<span class="mark-P">✓</span>':''}</td>
       <td class="chk">${v==='T'?'<span class="mark-T">✓</span>':''}</td>
     </tr>`;
-  }).join('');
+  });
+  const tblRowsPsico = [
+    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – Prof. Alyson</td></tr>`,
+    ...PSICO.map(item => {
+      const v = a[item.id] || '';
+      return `<tr>
+        <td>${esc(item.txt.replace(/;$/,''))}</td>
+        <td class="chk">${v==='A'?'<span class="mark-A">✓</span>':''}</td>
+        <td class="chk">${v==='P'?'<span class="mark-P">✓</span>':''}</td>
+        <td class="chk">${v==='T'?'<span class="mark-T">✓</span>':''}</td>
+      </tr>`;
+    })
+  ];
+  const tblRows = [...tblRowsAsp, ...tblRowsPsico].join('');
 
   return `<div class="paper">
     <table class="f-hdr">
@@ -841,11 +864,11 @@ function mostrarRpt() {
   document.getElementById('r-ano').textContent   = fd.ano   || '';
   document.getElementById('r-pres').textContent  = fd.pres  || '';
   document.getElementById('r-falt').textContent  = fd.falt  || '';
-  document.getElementById('r-data').textContent  = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('r-data').textContent  = '';
   document.getElementById('r-prof').textContent  = fd.prof  || '';
 
   // Fill evaluation table — checkmark (✓) in selected column, blank in others
-  document.getElementById('tbl-body').innerHTML = ASPECTOS.map(item => {
+  const aspRows = ASPECTOS.map(item => {
     const v = ans[item.id] || '';
     const numExtra = item.hasInput && ans['ni_'+item.id] ? ` ${ans['ni_'+item.id]}` : '';
     const itemTxt = item.txt.replace(/;$/,'') + numExtra;
@@ -855,7 +878,20 @@ function mostrarRpt() {
       <td class="chk">${v==='P' ? '<span class="mark-P">✓</span>' : ''}</td>
       <td class="chk">${v==='T' ? '<span class="mark-T">✓</span>' : ''}</td>
     </tr>`;
-  }).join('');
+  });
+  const psicoRows = [
+    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – Prof. Alyson</td></tr>`,
+    ...PSICO.map(item => {
+      const v = ans[item.id] || '';
+      return `<tr>
+        <td>${esc(item.txt.replace(/;$/,''))}</td>
+        <td class="chk">${v==='A' ? '<span class="mark-A">✓</span>' : ''}</td>
+        <td class="chk">${v==='P' ? '<span class="mark-P">✓</span>' : ''}</td>
+        <td class="chk">${v==='T' ? '<span class="mark-T">✓</span>' : ''}</td>
+      </tr>`;
+    })
+  ];
+  document.getElementById('tbl-body').innerHTML = [...aspRows, ...psicoRows].join('');
 
   document.getElementById('rpt-text').textContent = txt;
   document.getElementById('rpt-editor').value     = txt;
@@ -918,8 +954,8 @@ function adicionarAluno() {
   document.getElementById('nav').style.display      = 'flex';
   document.getElementById('sdots').style.display    = 'flex';
   document.getElementById('hdr-prog').innerHTML = `
-    <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
-    <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>`;
+    <div class="pl"><span id="pl-lbl">Etapa 1 de ${STEPS.length}</span><span id="pl-pct">${Math.round(100/STEPS.length)}%</span></div>
+    <div class="pb"><div class="pf" id="pf" style="width:${Math.round(100/STEPS.length)}%"></div></div>`;
   renderStep();
   window.scrollTo(0, 0);
 }
@@ -964,8 +1000,8 @@ function novoRpt() {
   document.getElementById('nav').style.display      = 'flex';
   document.getElementById('sdots').style.display    = 'flex';
   document.getElementById('hdr-prog').innerHTML = `
-    <div class="pl"><span id="pl-lbl">Etapa 1 de 7</span><span id="pl-pct">14%</span></div>
-    <div class="pb"><div class="pf" id="pf" style="width:14%"></div></div>`;
+    <div class="pl"><span id="pl-lbl">Etapa 1 de ${STEPS.length}</span><span id="pl-pct">${Math.round(100/STEPS.length)}%</span></div>
+    <div class="pb"><div class="pf" id="pf" style="width:${Math.round(100/STEPS.length)}%"></div></div>`;
   renderStep(); window.scrollTo(0,0);
 }
 
@@ -987,7 +1023,7 @@ async function baixarDOCX(turmaMode) {
     ? [...relatorios, { fd: Object.assign({}, fd), ans: Object.assign({}, ans) }]
     : [{ fd: Object.assign({}, fd), ans: Object.assign({}, ans) }];
 
-  const date = new Date().toLocaleDateString('pt-BR');
+  const date = '';
   const allKids = [];
   students.forEach((s, i) => {
     if (i > 0) allKids.push(new d.Paragraph({ children: [new d.PageBreak()] }));
@@ -1123,6 +1159,25 @@ function _buildDOCX(d, f, a, logo, date, kids) {
       );
       return tr(
         tc(p(r(item.txt.replace(/;$/,'')+numExtra, 16)), { w: aW, mt: 40, mb: 40 }),
+        mark('A','16A34A'), mark('P','D97706'), mark('T','DC2626')
+      );
+    }),
+    // Psicomotricidade section header
+    tr(new d.TableCell({
+      borders: B4, columnSpan: 4,
+      width: { size: aspW, type: d.WidthType.DXA },
+      shading: { fill: 'F0F0F0', type: 'clear' },
+      margins: { top: 60, bottom: 60, left: 100, right: 100 },
+      children: [p(r('PSICOMOTRICIDADE – Prof. Alyson', 17, true), true)]
+    })),
+    ...PSICO.map(item => {
+      const v = a[item.id] || '';
+      const mark = (col, color) => tc(
+        p(r(v===col?'✓':'', 20, true, v===col?color:'FFFFFF'), true),
+        { w: cW, mt: 40, mb: 40 }
+      );
+      return tr(
+        tc(p(r(item.txt.replace(/;$/,''), 16)), { w: aW, mt: 40, mb: 40 }),
         mark('A','16A34A'), mark('P','D97706'), mark('T','DC2626')
       );
     })
