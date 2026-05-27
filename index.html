@@ -168,9 +168,14 @@
     .asp-table td.chk .mark-T { color: var(--red);   font-weight: 900; font-size: 14px; }
 
     /* Parecer descritivo */
-    .f-parecer-lbl { font-weight: 700; font-size: 11px; margin-top: 8px; margin-bottom: 3px; }
-    .f-parecer-box { border: 1px solid #000; min-height: 120px; padding: 6px 8px; font-size: 11px; line-height: 1.7; white-space: pre-wrap; font-family: Arial, sans-serif; }
-    #rpt-editor { display: none; width: 100%; min-height: 160px; font-size: 11px; line-height: 1.7; font-family: Arial, sans-serif; border: 1px solid #000; padding: 6px 8px; resize: vertical; color: #000; }
+    .f-parecer-box { border: 1px solid #000; font-size: 11px; font-family: Arial, sans-serif; margin-top: 8px; }
+    .f-parecer-lbl-row { font-weight: 700; font-size: 11px; padding: 4px 8px; border-bottom: 1px solid #000; }
+    .f-parecer-content {
+      min-height: 120px; padding: 0 8px; font-size: 11px; white-space: pre-wrap;
+      line-height: 1.75em;
+      background-image: repeating-linear-gradient(transparent, transparent calc(1.75em - 1px), #bbb calc(1.75em - 1px), #bbb 1.75em);
+    }
+    #rpt-editor { display: none; width: 100%; min-height: 150px; font-size: 11px; line-height: 1.75em; font-family: Arial, sans-serif; border: none; padding: 0 8px; resize: vertical; color: #000; background: transparent; }
 
     /* Signatures */
     .f-sigs { display: flex; justify-content: space-around; margin-top: 24px; }
@@ -304,9 +309,11 @@
       </table>
 
       <!-- ── PARECER DESCRITIVO ── -->
-      <div class="f-parecer-lbl">PARECER DESCRITIVO:</div>
-      <div class="f-parecer-box" id="rpt-text"></div>
-      <textarea id="rpt-editor" spellcheck="true"></textarea>
+      <div class="f-parecer-box">
+        <div class="f-parecer-lbl-row">PARECER DESCRITIVO:</div>
+        <div class="f-parecer-content" id="rpt-text"></div>
+        <textarea id="rpt-editor" spellcheck="true"></textarea>
+      </div>
 
       <!-- ── SIGNATURES ── -->
       <div class="f-sigs">
@@ -479,7 +486,7 @@ const STEPS = [
   { id:'cien', title:'Ciências e Corpo', items: ASPECTOS.filter(x=>x.grupo==='cien'), desc:'Itens 10 a 12' },
   { id:'atit', title:'Convivência e Atitudes', items: ASPECTOS.filter(x=>x.grupo==='atit'), desc:'Itens 13 a 20' },
   { id:'arte', title:'Arte e Cultura', items: ASPECTOS.filter(x=>x.grupo==='arte'), desc:'Itens 14 a 15' },
-  { id:'psico', title:'Psicomotricidade – PROFESSOR ALYSON', items: PSICO, desc:'Itens 1 a 3' },
+  { id:'psico', title:'Psicomotricidade – Professor Alyson', items: PSICO, desc:'Itens 1 a 3' },
   { id:'parecer', title:'Parecer Descritivo' },
 ];
 
@@ -763,8 +770,10 @@ function gerarHTMLPaper(f, a) {
       </thead>
       <tbody>${tblRows}</tbody>
     </table>
-    <div class="f-parecer-lbl">PARECER DESCRITIVO:</div>
-    <div class="f-parecer-box">${esc(txt)}</div>
+    <div class="f-parecer-box">
+      <div class="f-parecer-lbl-row">PARECER DESCRITIVO:</div>
+      <div class="f-parecer-content">${esc(txt)}</div>
+    </div>
     <div class="f-sigs">
       <div class="f-sig"><div class="f-sig-line"></div>Professora</div>
       <div class="f-sig"><div class="f-sig-line"></div>Supervisão</div>
@@ -1186,14 +1195,24 @@ function _buildDOCX(d, f, a, logo, date, kids) {
 
   // ── Parecer descritivo ──
   const parecerTxt = gerarParecer(f, a);
-  kids.push(
-    p(r('PARECER DESCRITIVO:', 18, true), false, 120, 60),
-    mkTable([W], [tr(new d.TableCell({
-      borders: B4, width: { size: W, type: d.WidthType.DXA },
-      margins: { top: 80, bottom: 80, left: 120, right: 120 },
-      children: parecerTxt.split('\n\n').map(txt => p(r(txt, 18), false, 0, 80))
-    }))])
-  );
+  const BL = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB', space: 1 };
+  const parecerChildren = [
+    new d.Paragraph({
+      spacing: { before: 60, after: 60 },
+      border: { bottom: { style: d.BorderStyle.SINGLE, size: 4, color: '000000', space: 1 } },
+      children: [r('PARECER DESCRITIVO:', 18, true)]
+    }),
+    ...parecerTxt.split('\n\n').map(txt => new d.Paragraph({
+      spacing: { before: 0, after: 280 },
+      border: { bottom: BL },
+      children: [r(txt, 18)]
+    }))
+  ];
+  kids.push(mkTable([W], [tr(new d.TableCell({
+    borders: B4, width: { size: W, type: d.WidthType.DXA },
+    margins: { top: 60, bottom: 60, left: 120, right: 120 },
+    children: parecerChildren
+  }))]));
 
   // ── Signatures ──
   const sw = Math.floor(W/2);
