@@ -479,7 +479,7 @@ const STEPS = [
   { id:'cien', title:'Ciências e Corpo', items: ASPECTOS.filter(x=>x.grupo==='cien'), desc:'Itens 10 a 12' },
   { id:'atit', title:'Convivência e Atitudes', items: ASPECTOS.filter(x=>x.grupo==='atit'), desc:'Itens 13 a 20' },
   { id:'arte', title:'Arte e Cultura', items: ASPECTOS.filter(x=>x.grupo==='arte'), desc:'Itens 14 a 15' },
-  { id:'psico', title:'Psicomotricidade – Professor Alyson', items: PSICO, desc:'Itens 1 a 3' },
+  { id:'psico', title:'Psicomotricidade – PROFESSOR ALYSON', items: PSICO, desc:'Itens 1 a 3' },
   { id:'parecer', title:'Parecer Descritivo' },
 ];
 
@@ -705,7 +705,7 @@ function gerarHTMLPaper(f, a) {
     </tr>`;
   });
   const tblRowsPsico = [
-    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – professor Alyson</td></tr>`,
+    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – PROFESSOR ALYSON</td></tr>`,
     ...PSICO.map(item => {
       const v = a[item.id] || '';
       return `<tr>
@@ -880,7 +880,7 @@ function mostrarRpt() {
     </tr>`;
   });
   const psicoRows = [
-    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – professor Alyson</td></tr>`,
+    `<tr><td colspan="4" style="background:#f0f0f0;font-weight:700;text-align:center;font-size:10px;padding:3px 5px;border-top:1px solid #000;">PSICOMOTRICIDADE – PROFESSOR ALYSON</td></tr>`,
     ...PSICO.map(item => {
       const v = ans[item.id] || '';
       return `<tr>
@@ -1168,7 +1168,7 @@ function _buildDOCX(d, f, a, logo, date, kids) {
       width: { size: aspW, type: d.WidthType.DXA },
       shading: { fill: 'F0F0F0', type: 'clear' },
       margins: { top: 60, bottom: 60, left: 100, right: 100 },
-      children: [p(r('PSICOMOTRICIDADE – professor Alyson', 17, true), true)]
+      children: [p(r('PSICOMOTRICIDADE – PROFESSOR ALYSON', 17, true), true)]
     })),
     ...PSICO.map(item => {
       const v = a[item.id] || '';
