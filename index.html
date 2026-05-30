@@ -1177,7 +1177,7 @@ function _buildDOCX(d, f, a, logo, date, kids) {
       borders: B4, columnSpan: 4,
       width: { size: aspW, type: d.WidthType.DXA },
       shading: { fill: 'EEEEEE', type: 'clear' },
-      margins: { top: 60, bottom: 60, left: 100, right: 100 },
+      margins: { top: 30, bottom: 30, left: 100, right: 100 },
       children: [p(r('ASPECTOS IMPORTANTES', 18, true), true)]
     })),
     tr(
@@ -1191,10 +1191,10 @@ function _buildDOCX(d, f, a, logo, date, kids) {
       const numExtra = item.hasInput && a['ni_'+item.id] ? ` ${a['ni_'+item.id]}` : '';
       const mark = (col, color) => tc(
         p(r(v===col?'✓':'', 20, true, v===col?color:'FFFFFF'), true),
-        { w: cW, mt: 40, mb: 40 }
+        { w: cW, mt: 20, mb: 20 }
       );
       return tr(
-        tc(p(r(item.txt.replace(/;$/,'')+numExtra, 16)), { w: aW, mt: 40, mb: 40 }),
+        tc(p(r(item.txt.replace(/;$/,'')+numExtra, 16)), { w: aW, mt: 20, mb: 20 }),
         mark('A','16A34A'), mark('P','D97706'), mark('T','DC2626')
       );
     }),
@@ -1203,58 +1203,73 @@ function _buildDOCX(d, f, a, logo, date, kids) {
       borders: B4, columnSpan: 4,
       width: { size: aspW, type: d.WidthType.DXA },
       shading: { fill: 'F0F0F0', type: 'clear' },
-      margins: { top: 60, bottom: 60, left: 100, right: 100 },
+      margins: { top: 30, bottom: 30, left: 100, right: 100 },
       children: [p(r('PSICOMOTRICIDADE – PROFESSOR ALYSON', 17, true), true)]
     })),
     ...PSICO.map(item => {
       const v = a[item.id] || '';
       const mark = (col, color) => tc(
         p(r(v===col?'✓':'', 20, true, v===col?color:'FFFFFF'), true),
-        { w: cW, mt: 40, mb: 40 }
+        { w: cW, mt: 20, mb: 20 }
       );
       return tr(
-        tc(p(r(item.txt.replace(/;$/,''), 16)), { w: aW, mt: 40, mb: 40 }),
+        tc(p(r(item.txt.replace(/;$/,''), 16)), { w: aW, mt: 20, mb: 20 }),
         mark('A','16A34A'), mark('P','D97706'), mark('T','DC2626')
       );
     })
   ];
   kids.push(mkTable([aW, cW, cW, cW], aspRows));
 
-  // ── Parecer descritivo ──
+  // ── Parecer descritivo + Signatures (same table = never split) ──
   const parecerTxt = gerarParecer(f, a);
   const BL = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB', space: 0 };
-  // Split into individual sentences/lines so each gets a visible bottom-border "line"
+  const mkLine = (text) => new d.Paragraph({
+    spacing: { before: 0, after: 0, line: 380, lineRule: d.LineRuleType.AT_LEAST },
+    border: { bottom: BL },
+    children: [r(text, 18)]
+  });
   const parecerLines = parecerTxt.split('\n').filter(l => l.trim() !== '');
   const parecerChildren = [
     new d.Paragraph({
-      spacing: { before: 60, after: 60 },
+      spacing: { before: 40, after: 40 },
       border: { bottom: { style: d.BorderStyle.SINGLE, size: 4, color: '000000', space: 0 } },
       children: [r('PARECER DESCRITIVO:', 18, true)]
     }),
-    ...parecerLines.map(line => new d.Paragraph({
-      spacing: { before: 0, after: 200 },
-      border: { bottom: BL },
-      children: [r(line, 18)]
-    })),
-    // extra blank lines at the end for writing space
-    ...Array(4).fill(null).map(() => new d.Paragraph({
-      spacing: { before: 0, after: 200 },
-      border: { bottom: BL },
-      children: [r('', 18)]
-    }))
+    ...parecerLines.map(mkLine),
+    mkLine(''), mkLine(''),  // 2 blank lines for writing space
   ];
-  kids.push(mkTable([W], [tr(new d.TableCell({
-    borders: B4, width: { size: W, type: d.WidthType.DXA },
-    margins: { top: 60, bottom: 60, left: 120, right: 120 },
-    children: parecerChildren
-  }))]));
 
-  // ── Signatures ──
+  // Signature paragraphs
   const sw = Math.floor(W/2);
-  kids.push(mkTable([sw, W-sw], [tr(
-    tc([p(r('________________________________',18),true,360,0), p(r('Professora',18),true)], {nb:true}),
-    tc([p(r('________________________________',18),true,360,0), p(r('Supervisão',18),true)], {nb:true}),
-  )]));
+  const sigLine = (label) => [
+    p(r('________________________________', 18), true, 240, 0),
+    p(r(label, 18), true)
+  ];
+
+  // Wrap parecer + sigs in one outer table so they stay on same page
+  kids.push(new d.Table({
+    width: { size: W, type: d.WidthType.DXA },
+    columnWidths: [W],
+    rows: [
+      new d.TableRow({ children: [new d.TableCell({
+        borders: B4, width: { size: W, type: d.WidthType.DXA },
+        margins: { top: 40, bottom: 40, left: 120, right: 120 },
+        children: parecerChildren
+      })]}),
+      new d.TableRow({ children: [new d.TableCell({
+        borders: NB, width: { size: W, type: d.WidthType.DXA },
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+        children: [new d.Table({
+          width: { size: W, type: d.WidthType.DXA },
+          columnWidths: [sw, W-sw],
+          rows: [new d.TableRow({ children: [
+            tc(sigLine('Professora'), {nb:true, w:sw}),
+            tc(sigLine('Supervisão'), {nb:true, w:W-sw}),
+          ]})]
+        })]
+      })]})
+    ]
+  }));
 }
 
 /* ══════════════════════════════════
