@@ -174,8 +174,13 @@
       min-height: 120px; padding: 0 8px; font-size: 11px; white-space: pre-wrap;
       line-height: 1.75em;
       background-image: repeating-linear-gradient(transparent, transparent calc(1.75em - 1px), #bbb calc(1.75em - 1px), #bbb 1.75em);
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     #rpt-editor { display: none; width: 100%; min-height: 150px; font-size: 11px; line-height: 1.75em; font-family: Arial, sans-serif; border: none; padding: 0 8px; resize: vertical; color: #000; background: transparent; }
+
+    /* keep signatures on same page as parecer */
+    .f-sigs { page-break-before: avoid; break-before: avoid; }
 
     /* Signatures */
     .f-sigs { display: flex; justify-content: space-around; margin-top: 24px; }
@@ -1087,7 +1092,9 @@ function _buildDOCX(d, f, a, logo, date, kids) {
   });
 
   // ── School header ──
-  const lW = Math.round(W * 0.52), rW = W - lW;
+  const lW = Math.round(W * 0.52);
+  const c2W = Math.round((W - lW) / 2), c3W = W - lW - c2W;
+
   const logoContent = [];
   if (logo) logoContent.push(new d.Paragraph({
     alignment: d.AlignmentType.CENTER,
@@ -1102,17 +1109,37 @@ function _buildDOCX(d, f, a, logo, date, kids) {
     p(r('SÃO MATEUS', 17, true), true),
     p(r('Mantenedora: Associação Comunitária Integrada', 15), true)
   );
-  kids.push(mkTable([lW, rW], [
-    tr(
-      tc(logoContent, { w: lW }),
-      tc([
-        p(r(f.tri||'', 18, true), true),
-        p(r(`DATA: ${date}`, 17)),
-        p(r(`Ano: ${f.ano||''}`, 17)),
-        p(r(`Turma: ${f.turma||''}`, 17)),
-      ], { w: rW })
-    )
-  ]));
+
+  // Logo cell spans 2 rows using verticalMerge
+  const logoCell = new d.TableCell({
+    borders: B4, width: { size: lW, type: d.WidthType.DXA },
+    verticalMerge: d.VerticalMergeType.RESTART,
+    margins: { top: 60, bottom: 60, left: 100, right: 100 },
+    children: logoContent
+  });
+  const logoCellContinue = new d.TableCell({
+    borders: B4, width: { size: lW, type: d.WidthType.DXA },
+    verticalMerge: d.VerticalMergeType.CONTINUE,
+    margins: { top: 60, bottom: 60, left: 100, right: 100 },
+    children: [new d.Paragraph({ children: [] })]
+  });
+
+  kids.push(new d.Table({
+    width: { size: W, type: d.WidthType.DXA },
+    columnWidths: [lW, c2W, c3W],
+    rows: [
+      new d.TableRow({ children: [
+        logoCell,
+        tc(p(r(f.tri||'', 18, true), true), { w: c2W }),
+        tc(p(r(`DATA: ${date}`, 17)), { w: c3W }),
+      ]}),
+      new d.TableRow({ children: [
+        logoCellContinue,
+        tc(p(r(`Ano: ${f.ano||''}`, 17)), { w: c2W }),
+        tc(p(r(`Turma: ${f.turma||''}`, 17)), { w: c3W }),
+      ]}),
+    ]
+  }));
 
   // ── Student fields ──
   const c1=Math.round(W*.52), c2=Math.round(W*.24), c3=W-c1-c2;
@@ -1195,17 +1222,25 @@ function _buildDOCX(d, f, a, logo, date, kids) {
 
   // ── Parecer descritivo ──
   const parecerTxt = gerarParecer(f, a);
-  const BL = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB', space: 1 };
+  const BL = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB', space: 0 };
+  // Split into individual sentences/lines so each gets a visible bottom-border "line"
+  const parecerLines = parecerTxt.split('\n').filter(l => l.trim() !== '');
   const parecerChildren = [
     new d.Paragraph({
       spacing: { before: 60, after: 60 },
-      border: { bottom: { style: d.BorderStyle.SINGLE, size: 4, color: '000000', space: 1 } },
+      border: { bottom: { style: d.BorderStyle.SINGLE, size: 4, color: '000000', space: 0 } },
       children: [r('PARECER DESCRITIVO:', 18, true)]
     }),
-    ...parecerTxt.split('\n\n').map(txt => new d.Paragraph({
-      spacing: { before: 0, after: 280 },
+    ...parecerLines.map(line => new d.Paragraph({
+      spacing: { before: 0, after: 200 },
       border: { bottom: BL },
-      children: [r(txt, 18)]
+      children: [r(line, 18)]
+    })),
+    // extra blank lines at the end for writing space
+    ...Array(4).fill(null).map(() => new d.Paragraph({
+      spacing: { before: 0, after: 200 },
+      border: { bottom: BL },
+      children: [r('', 18)]
     }))
   ];
   kids.push(mkTable([W], [tr(new d.TableCell({
