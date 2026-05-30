@@ -1267,11 +1267,9 @@ function _buildDOCX(d, f, a, logo, date, kids) {
   });
 
   const totalLines = parecerLines.length;
-  const blankCount = 3; // extra blank lines for handwriting
   const allRows = [
     titleRow,
-    ...parecerLines.map((line, i) => mkRow(line, i === 0, false)),
-    ...Array(blankCount).fill(null).map((_, i) => mkRow('', false, i === blankCount - 1))
+    ...parecerLines.map((line, i) => mkRow(line, i === 0, i === totalLines - 1)),
   ];
 
   // Signature
@@ -1286,18 +1284,18 @@ function _buildDOCX(d, f, a, logo, date, kids) {
     width: { size: W, type: d.WidthType.DXA },
     columnWidths: [W],
     rows: [
-      new d.TableRow({ children: [new d.TableCell({
+      new d.TableRow({ cantSplit: true, children: [new d.TableCell({
         borders: NB, width: { size: W, type: d.WidthType.DXA },
         margins: { top: 0, bottom: 0, left: 0, right: 0 },
         children: [new d.Table({ width: { size: W, type: d.WidthType.DXA }, columnWidths: [W], rows: allRows })]
       })]}),
-      new d.TableRow({ children: [new d.TableCell({
+      new d.TableRow({ cantSplit: true, children: [new d.TableCell({
         borders: NB, width: { size: W, type: d.WidthType.DXA },
         margins: { top: 0, bottom: 0, left: 0, right: 0 },
         children: [new d.Table({
           width: { size: W, type: d.WidthType.DXA },
           columnWidths: [sw, W-sw],
-          rows: [new d.TableRow({ children: [
+          rows: [new d.TableRow({ cantSplit: true, children: [
             tc(sigLine('Professora'), {nb:true, w:sw}),
             tc(sigLine('Supervisão'), {nb:true, w:W-sw}),
           ]})]
