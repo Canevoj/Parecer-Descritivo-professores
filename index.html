@@ -1220,41 +1220,76 @@ function _buildDOCX(d, f, a, logo, date, kids) {
   ];
   kids.push(mkTable([aW, cW, cW, cW], aspRows));
 
-  // ── Parecer descritivo + Signatures (same table = never split) ──
+  // ── Parecer descritivo + Signatures (same outer table = never split) ──
   const parecerTxt = gerarParecer(f, a);
-  const BL = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB', space: 0 };
-  const mkLine = (text) => new d.Paragraph({
-    spacing: { before: 0, after: 0, line: 380, lineRule: d.LineRuleType.AT_LEAST },
-    border: { bottom: BL },
-    children: [r(text, 18)]
+
+  // Split text into individual sentence chunks so each row is ≈ 1 line
+  const rawLines = parecerTxt.split('\n').filter(l => l.trim());
+  // Further split long paragraphs at sentence boundaries ('. ')
+  const parecerLines = [];
+  rawLines.forEach(para => {
+    const sentences = para.match(/[^.!?]+[.!?]+/g) || [para];
+    sentences.forEach(s => { if (s.trim()) parecerLines.push(s.trim()); });
   });
-  const parecerLines = parecerTxt.split('\n').filter(l => l.trim() !== '');
-  const parecerChildren = [
-    new d.Paragraph({
-      spacing: { before: 40, after: 40 },
-      border: { bottom: { style: d.BorderStyle.SINGLE, size: 4, color: '000000', space: 0 } },
-      children: [r('PARECER DESCRITIVO:', 18, true)]
-    }),
-    ...parecerLines.map(mkLine),
-    mkLine(''), mkLine(''),  // 2 blank lines for writing space
+
+  // True lined-paper: each row of a single-column table is one "line"
+  // Row height AT_LEAST 340 twips (~0.24") — expands only if sentence wraps
+  const BK = BD;                                          // outer box border
+  const BG = { style: d.BorderStyle.SINGLE, size: 2, color: 'BBBBBB' }; // grey line
+  const BZ = { style: d.BorderStyle.NONE,   size: 0, color: 'FFFFFF' };  // invisible
+
+  const mkRow = (text, isFirst, isLast) => new d.TableRow({
+    height: { value: 340, rule: d.HeightRule.AT_LEAST },
+    children: [new d.TableCell({
+      borders: {
+        top:    isFirst ? BK : BZ,
+        left:   BK,
+        right:  BK,
+        bottom: isLast  ? BK : BG,
+      },
+      width: { size: W, type: d.WidthType.DXA },
+      margins: { top: 20, bottom: 0, left: 120, right: 120 },
+      children: [new d.Paragraph({
+        spacing: { before: 0, after: 0 },
+        children: [r(text, 18)]
+      })]
+    })]
+  });
+
+  // Title row (bold, black bottom border separates title from lined area)
+  const titleRow = new d.TableRow({
+    children: [new d.TableCell({
+      borders: { top: BK, left: BK, right: BK, bottom: BK },
+      width: { size: W, type: d.WidthType.DXA },
+      margins: { top: 40, bottom: 40, left: 120, right: 120 },
+      children: [new d.Paragraph({ children: [r('PARECER DESCRITIVO:', 18, true)] })]
+    })]
+  });
+
+  const totalLines = parecerLines.length;
+  const blankCount = 3; // extra blank lines for handwriting
+  const allRows = [
+    titleRow,
+    ...parecerLines.map((line, i) => mkRow(line, i === 0, false)),
+    ...Array(blankCount).fill(null).map((_, i) => mkRow('', false, i === blankCount - 1))
   ];
 
-  // Signature paragraphs
+  // Signature
   const sw = Math.floor(W/2);
   const sigLine = (label) => [
     p(r('________________________________', 18), true, 240, 0),
     p(r(label, 18), true)
   ];
 
-  // Wrap parecer + sigs in one outer table so they stay on same page
+  // Outer wrapper: parecer table + sig table as two rows → never page-split
   kids.push(new d.Table({
     width: { size: W, type: d.WidthType.DXA },
     columnWidths: [W],
     rows: [
       new d.TableRow({ children: [new d.TableCell({
-        borders: B4, width: { size: W, type: d.WidthType.DXA },
-        margins: { top: 40, bottom: 40, left: 120, right: 120 },
-        children: parecerChildren
+        borders: NB, width: { size: W, type: d.WidthType.DXA },
+        margins: { top: 0, bottom: 0, left: 0, right: 0 },
+        children: [new d.Table({ width: { size: W, type: d.WidthType.DXA }, columnWidths: [W], rows: allRows })]
       })]}),
       new d.TableRow({ children: [new d.TableCell({
         borders: NB, width: { size: W, type: d.WidthType.DXA },
